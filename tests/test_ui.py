@@ -11,8 +11,10 @@ class DocumentLangCase(unittest.TestCase):
     def setUp(self):
         self.html = UI.read_text("utf-8")
 
-    def test_default_lang_is_zh_cn(self):
-        self.assertIn('<html lang="zh-CN">', self.html)
+    def test_default_lang_is_en(self):
+        # Lifewood rebrand: the static pre-hydration fallback defaults to English
+        # (still overridden at runtime by ULANG, see test_ulang_updates_document_lang).
+        self.assertIn('<html lang="en">', self.html)
 
     def test_ulang_updates_document_lang(self):
         m = re.search(

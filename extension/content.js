@@ -136,9 +136,9 @@
                citations: scope ? extractCitations(scope) : [] };
     }
     const el = pickAnswerEl();
-    if (!el) return { ok: false, error: "没找到答案容器——请选中答案文本后重试" };
+    if (!el) return { ok: false, error: "Couldn't find the answer container — select the answer text and try again" };
     const answer = (el.innerText || "").trim();
-    if (answer.length < 40) return { ok: false, error: "答案内容太短——可能还没生成完，或需要选中文本提取" };
+    if (answer.length < 40) return { ok: false, error: "Answer is too short — it may not have finished generating, or you may need to select the text to extract it" };
     return { ok: true, mode: "auto", answer, citations: extractCitations(el) };
   }
 
@@ -152,7 +152,7 @@
 
   function fill(text) {
     const el = inputEl();
-    if (!el) return { ok: false, error: "没找到输入框——已复制到剪贴板，请手动粘贴" };
+    if (!el) return { ok: false, error: "Couldn't find the input box — copied to clipboard, paste it manually" };
     el.focus();
     if (el.tagName === "TEXTAREA" || el.tagName === "INPUT") {
       const setter = Object.getOwnPropertyDescriptor(
@@ -187,7 +187,7 @@
   let watch = null;
   function status(stableMs) {
     const body = document.body ? document.body.innerText || "" : "";
-    if (BLOCK_CUES.test(body.slice(0, 4000))) return { state: "blocked", reason: "页面出现验证码/风控提示" };
+    if (BLOCK_CUES.test(body.slice(0, 4000))) return { state: "blocked", reason: "A CAPTCHA/anti-bot prompt appeared on the page" };
     const el = pickAnswerEl();
     const text = el ? (el.innerText || "") : "";
     const now = Date.now();

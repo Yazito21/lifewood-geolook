@@ -38,13 +38,14 @@ async function activeTab() {
   return tab || null;
 }
 
-// 采样环境说明。国内引擎多数必须登录，无痕并非总是可行——
-// 关键不是「有没有开无痕」，而是「这批样本是在什么环境采的、有没有如实记录」。
+// Sampling-environment notes. Most CN engines require sign-in, so incognito isn't always
+// feasible — what matters isn't "was incognito on" but "what environment was this sample
+// taken in, and was that recorded honestly."
 const SESSION_NOTE = {
-  sandbox: "由 extension/sandbox.sh 起的一次性沙箱：无历史、无 Cookie、未登录，关掉即清除。免登录引擎（百度AI搜索、Google AI Overviews、秘塔、Perplexity 游客态）用这个最干净。",
-  incognito: "无痕 + 未登录，最接近陌生买家看到的答案。注意无痕默认禁用扩展（需在 chrome://extensions 里单独授权），且关窗后未上传的样本会丢失。",
-  clean_profile: "专用 Chrome Profile：只用于采样，从不搜自己品牌、不点自己官网，并关掉各家的记忆/个性化开关。需要登录的豆包/Kimi/元宝/ChatGPT 用这个。",
-  personal: "你的日常账号带着历史与个性化，测出来的是「AI 对你的画像」。这类样本会自动降级为「待复核」，不计入可信的可见性证据。",
+  sandbox: "A disposable sandbox launched by extension/sandbox.sh: no history, no cookies, signed out, wiped on close. Cleanest option for engines that need no sign-in (Baidu AI Search, Google AI Overviews, Metaso, Perplexity guest mode).",
+  incognito: "Incognito + signed out — closest to what a stranger buyer would see. Note: incognito disables extensions by default (grant it separately in chrome://extensions), and unsaved samples are lost when the window closes.",
+  clean_profile: "A dedicated Chrome profile used only for sampling — never search your own brand or click your own site, and turn off each engine's memory/personalization toggle. Use this for engines that require sign-in (Doubao, Kimi, Yuanbao, ChatGPT).",
+  personal: "Your daily account carries history and personalization, so this measures \"how AI profiles you,\" not a stranger's view. These samples are automatically downgraded to \"needs review\" and don't count as trustworthy visibility evidence.",
 };
 
 function sessionMode() { return $("#session").value || "sandbox"; }
@@ -54,12 +55,13 @@ async function refreshDiscipline() {
   $("#sesnote").textContent = SESSION_NOTE[sm];
   const tab = await activeTab();
   const warns = [];
-  // 只有选了「无痕」却不在无痕窗口时才报警——选专用 Profile 时无痕本来就不适用
+  // Only warn when "incognito" is selected but the window isn't actually incognito —
+  // this doesn't apply when a dedicated profile is selected.
   if (sm === "incognito" && tab && !tab.incognito)
-    warns.push("你选的是「无痕未登录」，但当前不是无痕窗口——要么换无痕窗口，要么把上面的采样环境改成实际用的那个");
+    warns.push("You selected \"incognito, signed out\" but this isn't an incognito window — switch to an incognito window, or change the sampling environment above to match what you're actually using");
   if (sm === "personal")
-    warns.push("个人日常账号采集：样本会标为「待复核」，别用它下可见性结论");
-  warns.push("每题新开对话，不连续追问；答案没提到品牌也照样保存");
+    warns.push("Sampling from a personal daily account: samples will be flagged \"needs review\" — don't draw visibility conclusions from them");
+  warns.push("Open a new chat per question, no follow-ups; save the answer even if it doesn't mention the brand");
   el.hidden = false;
   el.innerHTML = warns.map(w => "· " + w).join("<br>");
   el.style.display = warns.length > 1 ? "" : "none";
@@ -72,7 +74,7 @@ async function detectPlatform() {
     try { code = HOST2PLAT[new URL(tab.url).hostname.replace(/^www\./, "")] || ""; } catch (e) {}
   }
   const known = QUEUE.platforms.find(p => p.code === code);
-  $("#plat").textContent = known ? known.label : (code || "未识别");
+  $("#plat").textContent = known ? known.label : (code || "Unrecognized");
   if (known) $("#platSel").value = code;
 }
 
@@ -85,26 +87,26 @@ function collectedKey(p, qid) { return `${p}::${qid}`; }
 async function renderQueue() {
   const doneSet = new Set(SAMPLES.map(s => collectedKey(s.platform, s.question_id)));
   const p = currentPlatform();
-  // 按分组分节渲染：同一类问题连着采，人的思路不用来回切换
+  // Render sectioned by group so the same kind of question is sampled together, without switching context.
   const byGroup = {};
-  QUEUE.questions.forEach(q => (byGroup[q.group || "未分组"] = byGroup[q.group || "未分组"] || []).push(q));
+  QUEUE.questions.forEach(q => (byGroup[q.group || "Ungrouped"] = byGroup[q.group || "Ungrouped"] || []).push(q));
   const sections = Object.entries(byGroup).map(([g, list]) => {
     const left = list.filter(q => !doneSet.has(collectedKey(p, q.id))).length;
     return `<div class="small" style="color:var(--t600);margin:8px 0 2px">${g}
-        <span style="color:var(--t500)">· 待采 ${left}/${list.length}</span></div>` +
+        <span style="color:var(--t500)">· ${left}/${list.length} left</span></div>` +
       list.map(q => `
         <div class="q ${SEL && SEL.id === q.id ? "sel" : ""}" data-id="${q.id}">
           <span class="id">${q.id}</span>${q.text}
-          ${doneSet.has(collectedKey(p, q.id)) ? '<span class="done">✓ 已采</span>' : ""}
+          ${doneSet.has(collectedKey(p, q.id)) ? '<span class="done">✓ done</span>' : ""}
         </div>`).join("");
   }).join("");
-  $("#qlist").innerHTML = sections || '<div class="muted" style="padding:8px">先点「载入队列」</div>';
+  $("#qlist").innerHTML = sections || '<div class="muted" style="padding:8px">Click "Load queue" first</div>';
   document.querySelectorAll(".q").forEach(el => el.onclick = () => {
     SEL = QUEUE.questions.find(x => x.id === el.dataset.id);
     renderQueue();
   });
   $("#qmeta").textContent = QUEUE.questions.length
-    ? `${QUEUE.brand} · ${QUEUE.questions.length} 题${GROUPS.length ? "（" + GROUPS.join("/") + "）" : ""}` : "";
+    ? `${QUEUE.brand} · ${QUEUE.questions.length} questions${GROUPS.length ? " (" + GROUPS.join("/") + ")" : ""}` : "";
 }
 
 async function loadProjects() {
@@ -114,14 +116,14 @@ async function loadProjects() {
     const saved = await store.get("slug");
     if (saved && ps.some(p => p.slug === saved)) $("#slug").value = saved;
   } catch (e) {
-    $("#qmeta").textContent = "连不上看板——先启动 geo.py ui";
+    $("#qmeta").textContent = "Can't reach the dashboard — start it first with geo.py ui";
   }
 }
 
 function renderGroups() {
   $("#groups").innerHTML = (QUEUE.groups || []).map(g => `
     <span class="chip ${GROUPS.includes(g.name) ? "on" : ""} ${g.buyer ? "buyer" : ""}"
-      data-g="${g.name}" title="${g.buyer ? "买家意图组——离成交最近" : "需求教育/探测组"}">${g.name}<span class="n">${g.count}</span></span>`).join("");
+      data-g="${g.name}" title="${g.buyer ? "Buyer-intent group — closest to a purchase decision" : "Education/probe group"}">${g.name}<span class="n">${g.count}</span></span>`).join("");
   document.querySelectorAll(".chip").forEach(el => el.onclick = async () => {
     const g = el.dataset.g;
     GROUPS = GROUPS.includes(g) ? GROUPS.filter(x => x !== g) : GROUPS.concat(g);
@@ -134,7 +136,7 @@ async function loadQueue() {
   try {
     const qp = new URLSearchParams({ limit: "40" });
     if (GROUPS.length) qp.set("groups", GROUPS.join(","));
-    else qp.set("intent", "buyer");     // 没选过分组时默认买家意图，和周检表口径一致
+    else qp.set("intent", "buyer");     // Default to buyer intent when no group is picked, matching the weekly-sheet convention
     QUEUE = await apiGet(`/api/collect/queue/${slug()}?${qp}`);
     if (!GROUPS.length && QUEUE.selected && QUEUE.selected.length) GROUPS = QUEUE.selected;
     await store.set("slug", slug());
@@ -145,15 +147,15 @@ async function loadQueue() {
     SEL = QUEUE.questions[0] || null;
     renderQueue();
   } catch (e) {
-    $("#qmeta").textContent = "加载失败：" + e.message;
+    $("#qmeta").textContent = "Load failed: " + e.message;
   }
 }
 
 async function sendToTab(msg) {
   const tab = await activeTab();
-  if (!tab) return { ok: false, error: "找不到活动标签页" };
+  if (!tab) return { ok: false, error: "No active tab found" };
   try { return await chrome.tabs.sendMessage(tab.id, msg); }
-  catch (e) { return { ok: false, error: "此页面没有采样脚本（站点不在支持列表，或需刷新页面）" }; }
+  catch (e) { return { ok: false, error: "No sampling script on this page (site isn't supported, or the page needs a refresh)" }; }
 }
 
 $("#load").onclick = loadQueue;
@@ -170,48 +172,50 @@ $("#pickall").onclick = async () => {
 $("#copy").onclick = async () => {
   if (!SEL) return;
   await navigator.clipboard.writeText(SEL.text);
-  $("#exmeta").textContent = "已复制，去页面粘贴提问";
+  $("#exmeta").textContent = "Copied — paste it into the page";
 };
 
 $("#fill").onclick = async () => {
   if (!SEL) return;
   const r = await sendToTab({ type: "geolook-fill", text: SEL.text });
   if (!r.ok) { await navigator.clipboard.writeText(SEL.text); }
-  $("#exmeta").textContent = r.ok ? "已填入输入框——检查后自己按回车" : (r.error || "填入失败，已复制到剪贴板");
+  $("#exmeta").textContent = r.ok ? "Filled into the input box — review it, then press Enter yourself" : (r.error || "Fill failed, copied to clipboard instead");
 };
 
 $("#extract").onclick = async () => {
-  if (!SEL) { $("#exmeta").textContent = "先选一道题"; return; }
+  if (!SEL) { $("#exmeta").textContent = "Pick a question first"; return; }
   const r = await sendToTab({ type: "geolook-extract" });
-  if (!r.ok) { $("#exmeta").textContent = r.error || "提取失败"; $("#save").disabled = true; return; }
+  if (!r.ok) { $("#exmeta").textContent = r.error || "Extraction failed"; $("#save").disabled = true; return; }
   LAST = r;
   $("#preview").hidden = false;
   $("#preview").textContent = r.answer.slice(0, 800) + (r.answer.length > 800 ? " …" : "");
-  $("#exmeta").innerHTML = `<span class="okline">${r.mode === "selection" ? "选区提取" : "自动提取"} · ${r.answer.length} 字 · 引用 ${r.citations.length} 条</span>`;
+  $("#exmeta").innerHTML = `<span class="okline">${r.mode === "selection" ? "From selection" : "Auto-extracted"} · ${r.answer.length} chars · ${r.citations.length} citation(s)</span>`;
   $("#save").disabled = false;
 };
 
 $("#save").onclick = async () => {
   if (!LAST || !SEL) return;
   const plat = currentPlatform();
-  if (!plat) { $("#exmeta").textContent = "先在右上下拉选择当前引擎"; return; }
+  if (!plat) { $("#exmeta").textContent = "Pick the current engine in the dropdown above first"; return; }
   SAMPLES = SAMPLES.filter(s => !(s.platform === plat && s.question_id === SEL.id));
   SAMPLES.push({ platform: plat, question_id: SEL.id, question: SEL.text,
                  answer: LAST.answer, citations: LAST.citations, page_url: LAST.url,
                  session_mode: sessionMode(), ts: new Date().toISOString() });
   await store.set("samples:" + slug(), SAMPLES);
   LAST = null; $("#save").disabled = true; $("#preview").hidden = true;
-  $("#exmeta").textContent = "已保存。下一题：新开对话再问。";
-  // 自动跳到下一道未采的题
+  $("#exmeta").textContent = "Saved. Next question: open a new chat first.";
+  // Auto-jump to the next un-sampled question
   const done = new Set(SAMPLES.map(s => collectedKey(s.platform, s.question_id)));
   SEL = QUEUE.questions.find(q => !done.has(collectedKey(plat, q.id))) || SEL;
   $("#count").textContent = SAMPLES.length;
   renderQueue();
 };
 
-/* ---------------- 自动跑队列 ----------------
-   人在场、小批量、限速、异常即停。这是「替你操作」，不是「无人值守爬取」：
-   侧栏关掉就停、切走标签页就停、撞到验证码/风控立刻停并交回给人。*/
+/* ---------------- Auto-run queue ----------------
+   You stay present, small batches, rate-limited, halts on any anomaly. This is
+   "operating the page on your behalf," not "unattended crawling": closing the side
+   panel stops it, switching tabs stops it, and any CAPTCHA/anti-bot signal halts
+   it immediately and hands control back to you. */
 let RUN = null;
 
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -229,7 +233,7 @@ async function waitAnswer(tabId, timeoutMs) {
     await sleep(1500);
     let s;
     try { s = await chrome.tabs.sendMessage(tabId, { type: "geolook-status", stableMs: 2500 }); }
-    catch (e) { continue; }              // 导航中，重试
+    catch (e) { continue; }              // Page is navigating — retry
     if (!s) continue;
     if (s.state === "blocked") return s;
     if (s.state === "done") return s;
@@ -239,50 +243,50 @@ async function waitAnswer(tabId, timeoutMs) {
 
 async function autoRun() {
   const plat = currentPlatform();
-  if (!plat) { alog("先在上方选择当前引擎", "okline"); return; }
+  if (!plat) { alog("Pick the current engine above first", "okline"); return; }
   const tab = await activeTab();
   if (!tab) return;
   if (sessionMode() === "incognito" && !tab.incognito &&
-      !confirm("采样环境选的是「无痕未登录」，但当前不是无痕窗口。\n继续的话样本环境标记会与实际不符——建议先改上面的采样环境。仍要继续吗？")) return;
+      !confirm("The sampling environment is set to \"incognito, signed out\", but this isn't an incognito window.\nContinuing will mislabel the sample environment — consider changing the sampling environment above first. Continue anyway?")) return;
   const ivl = Math.max(10, +$("#ivl").value || 25) * 1000;
   const cap = Math.max(1, Math.min(30, +$("#cap").value || 20));
   const done = new Set(SAMPLES.map(s => collectedKey(s.platform, s.question_id)));
   const todo = QUEUE.questions.filter(q => !done.has(collectedKey(plat, q.id))).slice(0, cap);
-  if (!todo.length) { alog("这个引擎的队列已采完"); return; }
-  if (!confirm(`将在当前标签页自动提问 ${todo.length} 题（每题间隔 ${ivl / 1000}s）。\n请全程留在页面上；随时可点「中止」。`)) return;
+  if (!todo.length) { alog("This engine's queue is already fully sampled"); return; }
+  if (!confirm(`This will auto-ask ${todo.length} question(s) in the current tab (${ivl / 1000}s apart).\nStay on the page throughout; click "Abort" anytime to stop.`)) return;
 
   RUN = { tabId: tab.id, plat, total: todo.length, i: 0, fails: 0 };
   $("#auto").hidden = true; $("#abort").hidden = false;
-  alog(`开始：${todo.length} 题 · ${plat}${GROUPS.length ? " · " + GROUPS.join("/") : ""}`);
+  alog(`Starting: ${todo.length} question(s) · ${plat}${GROUPS.length ? " · " + GROUPS.join("/") : ""}`);
 
   for (const q of todo) {
     if (!RUN) break;
     RUN.i++;
-    // 每题新开会话：连续追问会让上文污染后面的答案
+    // Open a new chat per question — follow-ups would let prior context taint later answers
     try {
       const nc = await chrome.tabs.sendMessage(RUN.tabId, { type: "geolook-newchat" });
       if (nc && nc.url) { await chrome.tabs.update(RUN.tabId, { url: nc.url }); await sleep(3500); }
-    } catch (e) { /* 站点不在映射表，就地继续 */ }
+    } catch (e) { /* Site isn't in the map — continue in place */ }
     if (!RUN) break;
 
     let sent;
     try { sent = await chrome.tabs.sendMessage(RUN.tabId, { type: "geolook-submit", text: q.text }); }
-    catch (e) { sent = { ok: false, error: "页面无采样脚本" }; }
+    catch (e) { sent = { ok: false, error: "No sampling script on the page" }; }
     if (!sent || !sent.ok) {
-      RUN.fails++; alog(`[${RUN.i}/${RUN.total}] ${q.id} 提交失败：${(sent && sent.error) || "未知"}`);
-      if (RUN.fails >= 2) { alog("连续失败 2 次，已停止", "okline"); break; }
+      RUN.fails++; alog(`[${RUN.i}/${RUN.total}] ${q.id} submit failed: ${(sent && sent.error) || "unknown"}`);
+      if (RUN.fails >= 2) { alog("Stopped after 2 consecutive failures", "okline"); break; }
       continue;
     }
-    alog(`[${RUN.i}/${RUN.total}] ${q.id} 已提交，等待生成…`);
+    alog(`[${RUN.i}/${RUN.total}] ${q.id} submitted, waiting for it to finish…`);
 
     const st = await waitAnswer(RUN.tabId, 120000);
     if (!RUN) break;
-    if (st.state === "blocked") { alog("⚠ " + st.reason + " —— 已停止，请人工处理", "okline"); break; }
-    if (st.state !== "done") { RUN.fails++; alog(`[${RUN.i}] 超时未拿到答案`); if (RUN.fails >= 2) break; continue; }
+    if (st.state === "blocked") { alog("⚠ " + st.reason + " — stopped, please handle it manually", "okline"); break; }
+    if (st.state !== "done") { RUN.fails++; alog(`[${RUN.i}] timed out waiting for the answer`); if (RUN.fails >= 2) break; continue; }
 
     let ex;
     try { ex = await chrome.tabs.sendMessage(RUN.tabId, { type: "geolook-extract" }); }
-    catch (e) { ex = { ok: false, error: "提取失败" }; }
+    catch (e) { ex = { ok: false, error: "Extraction failed" }; }
     if (!ex || !ex.ok) { RUN.fails++; alog(`[${RUN.i}] ${ex && ex.error}`); if (RUN.fails >= 2) break; continue; }
 
     RUN.fails = 0;
@@ -293,21 +297,21 @@ async function autoRun() {
     await store.set("samples:" + slug(), SAMPLES);
     $("#count").textContent = SAMPLES.length;
     renderQueue();
-    alog(`[${RUN.i}/${RUN.total}] ✓ ${ex.answer.length} 字 · 引用 ${ex.citations.length}`, "okline");
+    alog(`[${RUN.i}/${RUN.total}] ✓ ${ex.answer.length} chars · ${ex.citations.length} citation(s)`, "okline");
     if (RUN.i < RUN.total) await sleep(ivl + Math.random() * 4000);
   }
 
   const finished = RUN ? RUN.i : 0;
   RUN = null;
   $("#auto").hidden = false; $("#abort").hidden = true;
-  alog(`结束：本轮 ${finished} 题，已采集 ${SAMPLES.length} 条。检查无误后点「上传到 GeoLook」。`, "okline");
+  alog(`Done: ${finished} question(s) this round, ${SAMPLES.length} collected in total. Once checked, click "Upload to GeoLook".`, "okline");
 }
 
 $("#auto").onclick = autoRun;
-$("#abort").onclick = () => { RUN = null; alog("已中止"); $("#auto").hidden = false; $("#abort").hidden = true; };
+$("#abort").onclick = () => { RUN = null; alog("Aborted"); $("#auto").hidden = false; $("#abort").hidden = true; };
 
 $("#upload").onclick = async () => {
-  if (!SAMPLES.length) { $("#upmsg").textContent = "还没有已采集的样本"; return; }
+  if (!SAMPLES.length) { $("#upmsg").textContent = "No collected samples yet"; return; }
   try {
     const r = await fetch(`${serverUrl()}/api/collect/${slug()}`, {
       method: "POST", headers: { "Content-Type": "application/json" },
@@ -315,23 +319,23 @@ $("#upload").onclick = async () => {
     });
     const j = await r.json();
     if (j.ok) {
-      $("#upmsg").textContent = `✓ 已导入 ${j.imported} 条（A 级人工样本），指标已重算`;
+      $("#upmsg").textContent = `✓ Imported ${j.imported} sample(s) (grade-A manual evidence), metrics recomputed`;
       SAMPLES = []; await store.set("samples:" + slug(), []);
       $("#count").textContent = "0"; renderQueue();
-    } else $("#upmsg").textContent = "导入失败：" + (j.error || r.status);
-  } catch (e) { $("#upmsg").textContent = "连不上看板：" + e.message; }
+    } else $("#upmsg").textContent = "Import failed: " + (j.error || r.status);
+  } catch (e) { $("#upmsg").textContent = "Can't reach the dashboard: " + e.message; }
 };
 
 $("#export").onclick = () => {
   if (!SAMPLES.length) return;
   const byPlat = {};
   SAMPLES.forEach(s => (byPlat[s.platform] = byPlat[s.platform] || []).push(s));
-  let md = `# ${QUEUE.brand || slug()} · 插件采样导出 · ${new Date().toISOString().slice(0, 10)}\n\n`;
+  let md = `# ${QUEUE.brand || slug()} · extension sample export · ${new Date().toISOString().slice(0, 10)}\n\n`;
   for (const [p, list] of Object.entries(byPlat)) {
     md += `## platform: ${p}\n\n`;
     for (const s of list) {
       const cites = s.citations.map(c => `- ${c.url} ${c.title}`).join("\n");
-      md += `### ${s.question_id} · ${s.question}\n\n\`\`\`answer\n${s.answer}\n${cites ? "\n引用：\n" + cites + "\n" : ""}\`\`\`\n\n`;
+      md += `### ${s.question_id} · ${s.question}\n\n\`\`\`answer\n${s.answer}\n${cites ? "\nCitations:\n" + cites + "\n" : ""}\`\`\`\n\n`;
     }
   }
   const a = document.createElement("a");
