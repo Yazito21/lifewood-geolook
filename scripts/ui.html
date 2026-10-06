@@ -1505,6 +1505,112 @@ function renderSide(){
 }
 
 /* ===================== 任务运行 ===================== */
+
+let SAMP={cfg:null,questions:[],engines:[],mode:'all',custom:new Set(),search:'',repeat:1,selected:new Set()};
+
+function samplingQuestionType(q){
+  const g=String(q.group||'').toLowerCase();
+  return q.brand_probe || q.market==='both' || g.includes('品牌验证') || g.includes('brand check') ? 'brand'
+    : (g==='推荐'||g==='recommend') ? 'recommend' : 'other';
+}
+
+function samplingRenderQuestions(){
+  const box=$('#sampling-question-list');
+  if(!box||!SAMP.questions)return;
+  const term=(SAMP.search||'').trim().toLowerCase();
+  const mode=SAMP.mode;
+  const rows=SAMP.questions.filter(function(q){
+    const type=samplingQuestionType(q);
+    const modeOk=mode==='all'||(mode==='recommend'&&type==='recommend')||(mode==='brand'&&type==='brand')||(mode==='custom'&&SAMP.custom.has(String(q.id)));
+    const txt=(String(q.id||'')+' '+String(q.text||'')).toLowerCase();
+    return modeOk&&(!term||txt.includes(term));
+  });
+  box.innerHTML=rows.length?rows.map(function(q){
+    const id=String(q.id||'');
+    return '<label class="row" style="gap:8px;padding:6px 4px;border-bottom:1px solid var(--line);cursor:pointer">'+
+      '<input type="checkbox" value="'+esc(id)+'" '+(SAMP.custom.has(id)?'checked':'')+
+      ' onchange="samplingToggleQuestion(\''+esc(id)+'\',this.checked)" style="accent-color:var(--a400)">'+
+      '<span style="font-size:11px;color:var(--a300);width:42px;flex:none">'+esc(id)+'</span>'+
+      '<span style="font-size:12px;line-height:1.45">'+esc(q.text||'')+'</span></label>';
+  }).join(''):'<div class="muted" style="padding:10px">没有符合条件的问题</div>';
+  const count=mode==='all'?SAMP.questions.length:
+    mode==='recommend'?SAMP.questions.filter(function(q){return samplingQuestionType(q)==='recommend'}).length:
+    mode==='brand'?SAMP.questions.filter(function(q){return samplingQuestionType(q)==='brand'}).length:SAMP.custom.size;
+  const el=$('#sampling-question-count');if(el)el.textContent=count+' 题';
+}
+
+function samplingToggleQuestion(id,checked){
+  if(checked)SAMP.custom.add(id);else SAMP.custom.delete(id);
+  samplingRenderQuestions();
+}
+
+function samplingSetMode(mode){
+  SAMP.mode=mode;
+  document.querySelectorAll('input[name="sampling-mode"]').forEach(function(x){x.checked=x.value===mode});
+  const custom=$('#sampling-custom');
+  if(custom)custom.style.display=mode==='custom'?'block':'none';
+  samplingRenderQuestions();
+}
+
+async function samplingConfigModal(preselected){
+  const cfg=await api('/api/config/'+SLUG);
+  if(!cfg||cfg.error){toast((cfg&&cfg.error)||'无法读取项目配置','err');return}
+  if(!KEYS)KEYS=await api('/api/keys');
+  if(!Array.isArray(KEYS))KEYS=[];
+  SAMP={cfg:cfg,questions:Array.isArray(cfg.questions)?cfg.questions:[],engines:KEYS.filter(function(k){return k.env}),mode:'all',custom:new Set(),search:'',repeat:1,selected:new Set()};
+  const compatible=function(k){return cfg.market==='both'||k.market===cfg.market};
+  const defaults=Array.isArray(preselected)
+    ?preselected.filter(function(code){return SAMP.engines.some(function(k){return k.code===code&&k.ok===true})})
+    :SAMP.engines.filter(function(k){return k.ok===true&&compatible(k)}).map(function(k){return k.code});
+  SAMP.selected=new Set(defaults);
+  const enginesHtml=SAMP.engines.map(function(k){
+    return '<label class="row" style="gap:8px;padding:6px 2px;cursor:'+(k.ok?'pointer':'not-allowed')+';opacity:'+(k.ok?'1':'.5')+'">'+
+      '<input type="checkbox" value="'+esc(k.code)+'" '+(SAMP.selected.has(k.code)?'checked':'')+' '+(k.ok?'':'disabled')+
+      ' onchange="samplingToggleEngine(\''+esc(k.code)+'\',this.checked)" style="accent-color:var(--a400)">'+
+      '<span style="flex:1;font-size:12.5px">'+esc(k.label)+' <span class="muted" style="font-size:10.5px">'+mktLabel(k.market)+'</span></span>'+
+      '<span style="font-size:10.5px;color:'+(k.ok?'var(--a300)':'var(--t600)')+'">'+(k.ok?'已配置':'未配置')+'</span></label>';
+  }).join('');
+  const modes=[['all','全部问题'],['recommend','Recommend'],['brand','Brand Check'],['custom','自定义']];
+  const modesHtml=modes.map(function(x){
+    return '<label class="tag '+(x[0]==='all'?'tag-accent':'tag-dim')+'" style="cursor:pointer;padding:5px 9px">'+
+      '<input type="radio" name="sampling-mode" value="'+x[0]+'" '+(SAMP.mode===x[0]?'checked':'')+
+      ' onchange="samplingSetMode(\''+x[0]+'\')" style="margin-right:4px">'+x[1]+'</label>';
+  }).join('');
+  modal('<h4 style="font-size:17px">AI 答案采样</h4>'+
+    '<p class="muted" style="font-size:12px;margin-top:4px;line-height:1.5">选择要运行的自动化引擎和问题。市场路由仍会生效：Global 问题只发给 Global 引擎，CN 问题只发给 CN 引擎，Brand Check（both）可发给两边。</p>'+
+    '<div style="margin-top:14px;font-size:13px;font-weight:500">1. 选择引擎</div>'+
+    '<div style="max-height:230px;overflow:auto;margin-top:7px;border:1px solid var(--line);border-radius:8px;padding:6px 10px">'+enginesHtml+'</div>'+
+    '<div style="margin-top:16px;font-size:13px;font-weight:500">2. 选择问题</div>'+
+    '<div class="row" style="gap:6px;margin-top:7px;flex-wrap:wrap">'+modesHtml+
+    '<span id="sampling-question-count" class="muted" style="margin-left:auto;font-size:11.5px"></span></div>'+
+    '<div id="sampling-custom" style="display:none;margin-top:8px">'+
+    '<input id="sampling-search" class="input" placeholder="搜索问题或 ID…" oninput="SAMP.search=this.value;samplingRenderQuestions()">'+
+    '<div id="sampling-question-list" style="margin-top:6px;max-height:250px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px 8px"></div></div>'+
+    '<div class="row" style="gap:10px;margin-top:14px"><label class="small">重复轮次 '+
+    '<select id="sampling-repeat" style="background:var(--deep);color:var(--text);border:1px solid #405546;border-radius:6px;padding:5px 8px;margin-left:4px">'+
+    '<option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>'+
+    '<span class="muted" style="font-size:11px">预计任务量会按「引擎 × 可路由问题 × 轮次」计算。</span></div>'+
+    '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn btn-secondary" onclick="closeModal()">取消</button>'+
+    '<button class="btn btn-primary" onclick="startSamplingFromModal()">开始采样</button></div>');
+  samplingRenderQuestions();
+}
+
+function samplingToggleEngine(code,checked){
+  if(checked)SAMP.selected.add(code);else SAMP.selected.delete(code);
+}
+
+async function startSamplingFromModal(){
+  const platforms=[...SAMP.selected];
+  if(!platforms.length){toast('至少选择一个已配置的自动化引擎','err');return}
+  const repeat=Math.max(1,Math.min(3,parseInt($('#sampling-repeat').value||'1',10)||1));
+  let qids=[];
+  if(SAMP.mode==='recommend')qids=SAMP.questions.filter(function(q){return samplingQuestionType(q)==='recommend'}).map(function(q){return String(q.id)});
+  else if(SAMP.mode==='brand')qids=SAMP.questions.filter(function(q){return samplingQuestionType(q)==='brand'}).map(function(q){return String(q.id)});
+  else if(SAMP.mode==='custom')qids=[...SAMP.custom];
+  const job=await runAction('sample',{platforms:platforms.join(','),repeat:repeat,question_ids:qids.join(',')});
+  if(job)closeModal();
+}
+
 async function runAction(a,params){
   const r=await post('/api/run',{slug:SLUG,action:a,params:params||{}});
   if(!r.ok){toast(r.error||'启动失败','err');return null}
