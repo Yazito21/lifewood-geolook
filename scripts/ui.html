@@ -1750,7 +1750,7 @@ function vOverview(){
 }
 
 /* ===================== 引擎表现 ===================== */
-async function engineVerdict(x){
+function engineVerdict(x){
   const neg=x.neg_n?'<span class="tag tag-accent" title="有样本在品牌附近命中负面线索词，到样本回放人工复核" style="cursor:help">疑似负面 '+x.neg_n+'</span> ':'';
   const sample=x.configured&&x.samples===0
     ?' <button class="btn btn-ghost" style="font-size:11px;padding:2px 7px;margin-left:6px" onclick="event.stopPropagation();samplingConfigModal([\''+x.platform+'\'])">采样</button>':'';
