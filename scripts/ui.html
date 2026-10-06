@@ -1756,7 +1756,7 @@ function engineVerdict(x){
     ?' <button class="btn btn-ghost" style="font-size:11px;padding:2px 7px;margin-left:6px" onclick="event.stopPropagation();samplingConfigModal([\''+x.platform+'\'])">采样</button>':'';
   return neg+esc(x.verdict||'—')+sample;
 }
-function vEngines(){
+async function vEngines(){
   if(!KEYS)KEYS=await api('/api/keys');
   if(!Array.isArray(KEYS))KEYS=[];
   const a=D.analytics,observed=a.engines||[];
