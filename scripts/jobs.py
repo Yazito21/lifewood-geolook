@@ -28,7 +28,7 @@ GEO_PY = G.ROOT / "scripts" / "geo.py"
 ACTIONS: dict[str, dict] = {
     "crawl":    {"label": "抓取站点", "args": ["--max-pages"], "desc": "重新抓取官网页面"},
     "audit":    {"label": "页面体检", "args": [], "desc": "六维打分"},
-    "sample":   {"label": "AI 答案采样", "args": ["--limit", "--repeat", "--platforms"],
+    "sample":   {"label": "AI 答案采样", "args": ["--limit", "--repeat", "--platforms", "--question-ids"],
                  "desc": "打问题库到各平台", "slow": True},
     "bootstrap":{"label": "自动推导底座", "args": ["--skip-llm"],
                  "desc": "从官网正文推出品牌事实、竞品、问题库", "slow": True},
