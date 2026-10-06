@@ -557,7 +557,8 @@ def confirm_competitors(slug: str, rows: list[dict]):
 # ------------------------------------------------------------ 命令
 
 
-def run(slug: str, platforms: list[str] | None = None, repeat: int = 1, limit: int | None = None) -> dict:
+def run(slug: str, platforms: list[str] | None = None, repeat: int = 1, limit: int | None = None,
+        question_ids: list[str] | None = None) -> dict:
     cfg = G.load_config(slug)
     if not cfg.get("questions"):
         G.die("geo.json 里还没有问题库，先让 Claude 生成 questions（见 SKILL.md 步骤 2）")
@@ -573,8 +574,24 @@ def run(slug: str, platforms: list[str] | None = None, repeat: int = 1, limit: i
 
     # 任务清单：平台 × 问题 × 轮次
     jobs = []
+    selected_ids = {str(x).strip() for x in (question_ids or []) if str(x).strip()}
+    if selected_ids:
+        known_ids = {str(q.get("id")) for q in cfg.get("questions", []) if q.get("id") is not None}
+        unknown = sorted(selected_ids - known_ids)
+        if unknown:
+            G.info("忽略不存在的问题 ID：" + "、".join(unknown))
+        selected_questions = [q for q in cfg.get("questions", []) if str(q.get("id")) in selected_ids]
+    else:
+        selected_questions = cfg.get("questions", [])
+
     for plat in runnable:
-        questions = questions_for(cfg, plat)
+        if selected_ids:
+            # Keep explicit question selection, then apply the normal CN/Global routing.
+            m = market_of(plat)
+            questions = [q for q in selected_questions
+                         if (q.get("market") or cfg.get("market", "cn")) in ("both", m)]
+        else:
+            questions = questions_for(cfg, plat)
         if limit:
             questions = questions[:limit]
         if not questions:
