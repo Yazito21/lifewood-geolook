@@ -259,7 +259,8 @@ def cmd_sample(a):
     import sample
 
     sample.run(a.slug, platforms=a.platforms.split(",") if a.platforms else None,
-               repeat=a.repeat, limit=a.limit)
+               repeat=a.repeat, limit=a.limit,
+               question_ids=a.question_ids.split(",") if a.question_ids else None)
 
 
 def cmd_sheet(a):
@@ -534,6 +535,8 @@ def main():
     s.add_argument("--platforms", help="逗号分隔，默认取 geo.json 里有 Key 的")
     s.add_argument("--repeat", type=int, default=1, help="每题重复采样次数")
     s.add_argument("--limit", type=int, default=None, help="只跑前 N 个问题")
+    s.add_argument("--question-ids", dest="question_ids",
+                   help="逗号分隔的问题 ID；与市场路由一起生效")
     s.set_defaults(func=cmd_sample)
 
     s = sub.add_parser("sample-sheet", help="导出人工/浏览器采样表")
