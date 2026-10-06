@@ -120,6 +120,17 @@ PROVIDERS = {
         "search": False,
         "note": "xAI API，不联网；X 内嵌的 Grok 联网行为需在网页端采",
     },
+    "openclaw": {
+        "name": "OpenClaw (Gateway)", "market": "global",
+        # OpenClaw exposes an OpenAI-compatible Chat Completions endpoint on its Gateway.
+        # By default this points to a local Gateway; set OPENCLAW_BASE_URL for a remote/private Gateway.
+        "base": os.environ.get("OPENCLAW_BASE_URL", "http://127.0.0.1:18789/v1"),
+        "model": "openclaw/default",
+        "model_env": "OPENCLAW_MODEL",
+        "key_env": "OPENCLAW_API_KEY",
+        "search": False,
+        "note": "OpenClaw Gateway agent target; the actual backend model/tools are controlled by the OpenClaw agent configuration",
+    },
     "perplexity": {
         "name": "Perplexity", "market": "global",
         "base": "https://api.perplexity.ai",
