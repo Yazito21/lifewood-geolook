@@ -1644,10 +1644,26 @@ function vOverview(){
 }
 
 /* ===================== 引擎表现 ===================== */
-async function vEngines(){
+async function engineVerdict(x){
+  const neg=x.neg_n?'<span class="tag tag-accent" title="有样本在品牌附近命中负面线索词，到样本回放人工复核" style="cursor:help">疑似负面 '+x.neg_n+'</span> ':'';
+  const sample=x.configured&&x.samples===0
+    ?' <button class="btn btn-ghost" style="font-size:11px;padding:2px 7px;margin-left:6px" onclick="event.stopPropagation();samplingConfigModal([\''+x.platform+'\'])">采样</button>':'';
+  return neg+esc(x.verdict||'—')+sample;
+}
+function vEngines(){
   if(!KEYS)KEYS=await api('/api/keys');
   if(!Array.isArray(KEYS))KEYS=[];
-  const a=D.analytics,engs=a.engines||[];
+  const a=D.analytics,observed=a.engines||[];
+  // Show configured API engines even before their first sample. Analytics only contains
+  // engines that have produced data, which previously caused configured OpenClaw to disappear.
+  const engs=[...observed];
+  (KEYS||[]).filter(k=>k.env&&k.ok===true&&!engs.some(e=>e.platform===k.code)).forEach(k=>{
+    engs.push({
+      platform:k.code,label:k.label,market:k.market,search:k.search,samples:0,
+      mention:null,pos_median:null,cite_share:null,cite_counts:[0,0],top_sources:[],
+      verdict:'已配置 · 尚未采样',configured:true
+    });
+  });
   const manual=(KEYS||[]).filter(k=>k.ok!==true&&!engs.some(e=>e.platform===k.code));
   const sel=ST.engSel||((engs[0]||{}).platform);
   const e=engs.find(x=>x.platform===sel);
@@ -1669,9 +1685,9 @@ async function vEngines(){
         <td style="font-size:13px;color:var(--t400)">${x.samples}</td>
         <td><span class="tag ${(x.mention||0)>0?'pill-good':'pill-warn'}">${pct(x.mention)}</span></td>
         <td style="font-size:13px;color:var(--t400)">${x.pos_median==null?'—':x.pos_median}</td>
-        <td style="font-size:13px;color:var(--t400)">${pct(x.cite_share)}<span class="muted" style="font-size:10.5px"> ${x.cite_counts[0]}/${x.cite_counts[1]}</span></td>
+        <td style="font-size:13px;color:var(--t400)">${pct(x.cite_share)}<span class="muted" style="font-size:10.5px"> ${(x.cite_counts||[0,0])[0]}/${(x.cite_counts||[0,0])[1]</span></td>
         <td style="font-size:12.5px;color:var(--t500)">${esc((x.top_sources||[]).join(' / ')||'—')}</td>
-        <td style="font-size:12.5px;color:var(--t400)">${x.neg_n?`<span class="tag tag-accent" title="有样本在品牌附近命中负面线索词，到样本回放人工复核" style="cursor:help">疑似负面 ${x.neg_n}</span> `:''}${esc(x.verdict)}</td></tr>`).join('')}
+        <td style="font-size:12.5px;color:var(--t400)">${engineVerdict(x)}</td></tr>`).join('')}
       ${manual.map(k=>`<tr style="opacity:.65">
         <td><span style="font-size:14px">${esc(k.label)}</span>
           <div style="font-size:10.5px;color:var(--t600)">${mktLabel(k.market)} · ${k.ok===false?'缺 API Key':'仅人工采样'}</div></td>
