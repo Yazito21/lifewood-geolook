@@ -152,7 +152,7 @@ const pct=v=>v==null?'—':(v*100).toFixed(v>0&&v<0.095?1:0)+'%';
 const api=async(u,o)=>{try{const r=await fetch(u,o);const j=await r.json().catch(()=>null);
   if(!r.ok)return (j&&j.error)?j:{error:`HTTP ${r.status}`};
   return j??{error:'响应不是 JSON'}}catch(e){return{error:'连接失败：服务未响应'}}};
-const mktLabel=m=>m==='cn'?'国内':m==='global'?'海外':'通用';
+const mktLabel=m=>m==='cn'?'CN':m==='global'?'Global':'Both';
 const diagTag=d=>{if(!d)return'<span style="font-size:12px;color:var(--t600)">—</span>';
   const cls=d.sev==='P0'?'tag-accent':d.sev==='P1'?'pill-warn':d.sev==='P2'?'tag-dim':'pill-good';
   return `<span class="tag ${cls}" title="${esc(d.detail)}" style="cursor:help">${esc(d.type)}</span>`};
@@ -200,12 +200,7 @@ function head(kicker,title,sub){return `<div class="kicker">${esc(kicker)}</div>
 /* ===================== 界面多语言(zh/en/ja) =====================
    中文是源文案。en/ja 用「整句精确匹配 + 短节点词级替换」在渲染后翻译 DOM,
    字典未覆盖的保持中文(优雅降级);项目数据(问题库/工单/阵地文案)跟随数据语言,不翻。*/
-const ULANG=(()=>{
-  const q=new URLSearchParams(location.search).get('lang');
-  if(['zh','en','ja'].indexOf(q)>=0){try{localStorage.setItem('ulang',q)}catch(e){}return q}
-  const s=localStorage.getItem('ulang');if(['zh','en','ja'].indexOf(s)>=0)return s;
-  const l=(navigator.language||'').toLowerCase();
-  return l.indexOf('zh')===0?'zh':l.indexOf('ja')===0?'ja':'en'})();
+const ULANG='en';
 document.documentElement.lang={zh:'zh-CN',en:'en',ja:'ja'}[ULANG]||'zh-CN';
 function setLang(l){localStorage.setItem('ulang',l);location.reload()}
 // 原生 confirm()/alert() 文案不经过 uiTranslate（非 DOM 文本节点），English gap-fill 用 tr() 在调用处直接分支
@@ -226,7 +221,7 @@ const UI_D={en:{
 '提升 · 该做什么':'ACTION · WHAT TO DO','行动计划':'Action Plan','内容工作台':'Workbench','部署资产':'Assets',
 '成效 · 做了有没有用':'RESULTS · DID IT WORK','效果验收':'Verification','报告与交付':'Reports & Delivery','账号':'ACCOUNT','设置':'Settings',
 '采样为手动触发或由 schedule 驱动':'Sampling is manual or schedule-driven','▶ 跑完整一期':'▶ Run full cycle',
-'保存':'Save','取消':'Cancel','关闭':'Close','配置':'Configure','修改':'Edit','详情':'Details','刷新':'Refresh','进入':'Open','打开':'Open',
+'保存':'Save','Cancel':'Cancel','关闭':'Close','配置':'Configure','修改':'Edit','详情':'Details','刷新':'Refresh','进入':'Open','打开':'Open',
 '写内容':'Write','生成':'Generate','复制':'Copy','保存修改':'Save changes','返回设置':'Back to Settings','去设置':'Go to Settings',
 '去配置':'Configure','去配置 Key →':'Configure keys →','知道了':'Got it','重试':'Retry','删':'Del','停止任务':'Stop job','自动验收':'Auto-verify',
 '切换品牌':'Switch brand','+ 接入新品牌':'+ Add brand','编辑当前品牌配置':'Edit brand config','导出 CSV':'Export CSV',
@@ -274,7 +269,7 @@ const UI_D={en:{
 '品牌与项目':'Brands & projects','域名':'Domain','站点体检均分':'Audit avg','引擎与密钥':'Engines & keys','运行任务':'Run jobs','周期复跑':'Scheduled re-run','关':'Off',
 '点「配置」填 Key 和模型，写入项目根目录 .env，立即生效。无 API 的引擎走人工采样表。':'Click Configure to set keys & models (written to local .env, effective immediately). Engines without APIs use manual sheets.',
 '后台子进程执行，关掉页面也会跑完。同一项目同时只跑一个。':'Jobs run as background subprocesses. One at a time per project.',
-'✦ 全自动引导':'✦ Auto-bootstrap','▶ 跑完整一期':'▶ Run full cycle','发布渠道':'Publishing channels','已就绪':'Ready','人工采样':'Manual','已配置':'Configured',
+'✦ 全自动引导':'✦ Auto-bootstrap','▶ 跑完整一期':'▶ Run full cycle','发布渠道':'Publishing channels','已就绪':'Ready','人工采样':'Manual','Configured':'Configured',
 '最近发布：':'Recent publishes:','发布到渠道':'Publish to channel','发布':'Publish','渠道配置':'Channel config','该文件的发布记录':'Publish history for this file',
 '选一个问题，就地开写':'Pick a question, write right here','换一题 →':'Switch question →','选择一个问题':'Pick a question','搜问题…':'Search…',
 '分发清单 · 这篇该铺到哪':'DISTRIBUTION · WHERE THIS GOES','这条任务要解决':'THIS TASK ANSWERS','必须包含的抽取块（实测增益）':'REQUIRED BLOCKS (MEASURED LIFT)',
@@ -292,7 +287,7 @@ const UI_D={en:{
 '提升 · 该做什么':'実行 · 何をすべきか','行动计划':'アクションプラン','内容工作台':'ワークベンチ','部署资产':'デプロイ資産',
 '成效 · 做了有没有用':'成果 · 効果はあったか','效果验收':'効果検証','报告与交付':'レポートと納品','账号':'アカウント','设置':'設定',
 '采样为手动触发或由 schedule 驱动':'サンプリングは手動または schedule 駆動','▶ 跑完整一期':'▶ フルサイクル実行',
-'保存':'保存','取消':'キャンセル','关闭':'閉じる','配置':'設定','修改':'変更','详情':'詳細','刷新':'更新','进入':'開く','打开':'開く',
+'保存':'保存','Cancel':'キャンセル','关闭':'閉じる','配置':'設定','修改':'変更','详情':'詳細','刷新':'更新','进入':'開く','打开':'開く',
 '写内容':'執筆','生成':'生成','复制':'コピー','保存修改':'変更を保存','返回设置':'設定へ戻る','去设置':'設定へ','去配置':'設定する','去配置 Key →':'キー設定へ →',
 '知道了':'OK','重试':'再試行','删':'削除','停止任务':'ジョブ停止','自动验收':'自動検証','切换品牌':'ブランド切替','+ 接入新品牌':'+ ブランド追加','编辑当前品牌配置':'ブランド設定を編集','导出 CSV':'CSV 出力',
 '现状 · 总览':'現状 · 概要','现状 · 引擎表现':'現状 · エンジン','现状 · 竞品对比':'現状 · 競合','现状 · 问题库':'現状 · 質問',
@@ -342,7 +337,7 @@ const UI_D={en:{
 '词数接近 0 的是前端渲染空壳页——AI 抓取器看到的是空白，这是国内官网最常见的致命伤。修复清单见':'語数ほぼ 0 はフロントエンド描画の空ページ——AI クローラには白紙に見える。修正リストは',
 '点「配置」填 Key 和模型，写入项目根目录 .env，立即生效。无 API 的引擎走人工采样表。':'「設定」で Key とモデルを入力するとローカル .env に書き込まれ即時反映。API なしのエンジンは手動採取表で。',
 '后台子进程执行，关掉页面也会跑完。同一项目同时只跑一个。':'バックグラウンドのサブプロセスで実行され、ページを閉じても完走。同一プロジェクトは同時 1 件のみ。',
-'最近发布：':'最近の公開：','已就绪':'準備完了','人工采样':'手動','已配置':'設定済み',
+'最近发布：':'最近の公開：','已就绪':'準備完了','人工采样':'手動','Configured':'設定済み',
 '发布到渠道':'チャネルへ公開','发布':'公開','渠道配置':'チャネル設定',
 '选一个问题，就地开写':'質問を選んでここで書く','换一题 →':'質問を替える →','选择一个问题':'質問を選択','搜问题…':'検索…',
 '分发清单 · 这篇该铺到哪':'配信リスト · この記事の行き先','成稿':'完成稿','AI 初稿':'AI 下書き','大纲':'アウトライン','重新预检':'再チェック','发布为成稿':'完成稿にする','发布到渠道…':'チャネルへ公開…',
@@ -351,11 +346,11 @@ const UI_D={en:{
 '创建并开始自动引导':'作成して自動開始','⚠ 还没有配置任何引擎 API Key':'⚠ エンジン API キー未設定',
 '这些数字怎么来的——生成规则与指标口径':'数値の由来——生成ルールと指標定義','数据加载失败':'読み込み失敗',
 }};
-const UI_SUB={en:[['已配置','Configured'],['人工采样','Manual'],['未测','n/a'],['未采样','Not sampled'],['已成稿','Final'],['仅大纲','Outline only'],['AI初稿','AI draft'],['缺口','Gap'],
+const UI_SUB={en:[['Configured','Configured'],['人工采样','Manual'],['未测','n/a'],['未采样','Not sampled'],['已成稿','Final'],['仅大纲','Outline only'],['AI初稿','AI draft'],['缺口','Gap'],
  ['已被引用','Cited'],['未建','Not built'],['已验收','Verified'],['未达标','Below target'],['通过','Pass'],['待人工','Manual check'],['数据更新于','Updated '],
  ['疑似负面','Susp. negative'],['竞品主导','Rival-dominated'],['完全缺席','Absent'],['排名靠后','Low-ranked'],['表现正常','Healthy'],['点名','named'],
  ['联网','search'],['参数化知识','parametric'],['自有阵地','owned'],['百科','wiki'],['榜单','rankings'],['已铺','placed'],['适配','fits'],['当前','current']],
-ja:[['已配置','設定済'],['人工采样','手動'],['未测','未計測'],['未采样','未採取'],['已成稿','完成稿'],['仅大纲','概要のみ'],['AI初稿','AI 下書き'],['缺口','欠落'],
+ja:[['Configured','設定済'],['人工采样','手動'],['未测','未計測'],['未采样','未採取'],['已成稿','完成稿'],['仅大纲','概要のみ'],['AI初稿','AI 下書き'],['缺口','欠落'],
  ['已被引用','引用あり'],['未建','未構築'],['已验收','検証済'],['未达标','未達'],['通过','合格'],['待人工','要確認'],['数据更新于','更新 '],
  ['疑似负面','ネガ疑い'],['竞品主导','競合支配'],['完全缺席','完全不在'],['排名靠后','低順位'],['表现正常','正常'],['点名','指名'],
  ['联网','検索'],['参数化知识','パラメトリック'],['自有阵地','自社'],['已铺','配信済'],['适配','適合'],['当前','現在']]};
@@ -423,6 +418,71 @@ UI_SUB.en.push(['样本不足，不下结论','Too few samples to judge'],['表�
 UI_SUB.ja.push(['样本不足，不下结论','サンプル不足で判定なし'],['表现最好的引擎，值得优先加固','最良——優先強化'],
  ['有存在感但不稳定','存在感あるが不安定'],['偶发提及，尚未进入候选集','散発的。候補未到達'],
  ['从未引用你的域名','自社ドメイン引用なし'],['缺 API Key','API キー未設定'],['仅人工采样','手動のみ'],['国内','中国'],['海外','海外']);
+Object.assign(UI_D.en,{
+  '已成稿':'Final','仅大纲':'Outline only','AI初稿':'AI draft','缺口':'Gap','已被引用':'Cited',
+  '未达标':'Below target','通过':'Pass','待人工':'Manual review','数据更新于':'Data updated',
+  '疑似负面':'Suspected negative','竞品主导':'Rival-dominated','完全缺席':'Absent','排名靠后':'Low-ranked',
+  '表现正常':'Normal','点名':'Named','参数化知识':'Parametric knowledge','已铺':'Placed','适配':'Fits',
+  '当前':'Current','你':'You','配置':'Configure','保存':'Save','失败':'Failed','已停止':'Stopped',
+  '已中断':'Interrupted','运行中…':'Running…','已启动：':'Started: ','已保存':'Saved','失败：':'Failed: ',
+  '已发送停止信号':'Stop signal sent','任务状态丢失':'Job status lost','已写入 .env':'Written to .env',
+  '清除 Key':'Clear key','粘贴 API Key':'Paste API key','留空则保持现有 Key 不变':'Leave blank to keep the current key unchanged',
+  '留空用默认':'blank uses the default','模型':'Model','确定从 .env 删除':'Delete from .env',
+  '最近发布：':'Recent publishes:','发布到渠道':'Publish to channel','渠道配置':'Channel configuration',
+  '发布记录':'Publish history','选择一个问题':'Select a question','搜索问题…':'Search questions…',
+  '换一题 →':'Switch question →','写内容':'Write content',
+  '删除这条样本？当日指标会重算，且不可恢复。':'Delete this sample? That day’s metrics will be recomputed and cannot be undone.'
+});
+Object.assign(UI_D.en,{
+  '本期没有实体被提及':'No entities were mentioned this round',
+  '没有符合条件的问题':'No questions match the criteria',
+  '无法读取项目配置':'Unable to read project configuration',
+  '启动失败':'Failed to start',
+  '结束':'Ended',
+  '暂无任务，先到「设置」跑一期。':'No jobs yet. Run a cycle from Settings first.',
+  '尚未采样':'Not sampled yet',
+  '差 ':'Gap ',
+  '保存失败':'Save failed',
+  '配置 ':'Configure ',
+  ' 后自动采样':' to enable automatic sampling',
+  '无一来自你':'none are from your site',
+  '疑似负面 · 人工复核':'Suspected negative · manual review',
+  '本期该引擎没有返回引用来源（可能未联网）':'This engine returned no citation sources this round (it may not have been browsing)',
+  '本期没有失守问题':'No lost questions this round',
+  '本期没有独占问题——先把「被抢走的问题」补上':'No owned questions this round — fix the lost questions first',
+  '候选都已入库——重新拓词看看有没有新词。':'All candidates are already in the bank — expand keywords again to find new terms.',
+  '点上方分组卡片只看该类问题':'Click a group card to filter',
+  '全站指标都来自「问题库 × 引擎」的批量采样。规则是固定的、可复现的，下面是完整口径。':'All site metrics come from batch sampling across the question bank × engines. The rules are fixed and reproducible; the full methodology is below.',
+  '一、问题库怎么批量生成（接入品牌 / AI 补充选题）':'1. How the question bank is generated (brand onboarding / AI-added topics)',
+  '输入只有四样：<b>品牌名、品类、目标用户、一句话定义</b>——全部从官网正文自动抽取，抽不到的标「待确认」，不用常识填充。':'Only four inputs are used: <b>brand name, category, target user, and one-line positioning</b> — all extracted from website content. Anything not found is marked “unconfirmed” rather than guessed.',
+  '由你配置的 LLM 按固定提示词出题，分七组：<b>推荐、比较、替代、价格、风险、品牌验证、场景</b>，每组 2–4 题。':'Your configured LLM generates questions from a fixed prompt in seven groups: <b>Recommend, Compare, Alternatives, Pricing, Risk, Brand Check, and Scenarios</b>, with 2–4 questions per group.',
+  '题量按市场定：国内 18–24 题；海外 14–20 题；双市场 = 国内 16–20 + 海外 12–16 + 通用 2。编号 q001 起为国内、q101 起为海外、q901 起为通用。':'Question volume depends on market: CN 18–24; Global 14–20; both = CN 16–20 + Global 12–16 + 2 general. IDs start at q001 for CN, q101 for Global, and q901 for general.',
+  '要求真实口语问法：国内题像真人在 AI 里打的字；海外题是<b>英文原生问法</b>，不是中文题翻译。':'Questions should sound natural: CN questions should read like real user prompts; Global questions are <b>native English</b>, not translated from Chinese.',
+  '<b>关键纪律：绝大多数问题不出现品牌名</b>——考的是 AI 会不会主动想到你。只有「品牌验证」组点名，这类题带「点名」标记，单独归品牌认知，不计入提及率。':'<b>Key rule: most questions must not name the brand</b> — the test is whether AI thinks of you unprompted. Only the Brand Check group names the brand; those are marked “Named”, tracked separately, and excluded from mention rate.',
+  '生成后自动去重、校验分组与市场标记；问题库随时可人工编辑，改完重跑采样才生效。':'Questions are deduplicated and validated after generation; the bank can be edited manually at any time, with changes taking effect on the next sampling run.',
+  '二、采样怎么跑':'2. How sampling runs',
+  '每期把问题库里的每道题逐个引擎各问一遍，存<b>原始回答全文</b>——引擎表现页的「样本回放」就是原文。':'Each round asks every question to each engine and stores the <b>full raw answer</b> — the Engines page sample replay shows that raw text.',
+  '市场路由：中文题只问国内引擎，英文题只问海外引擎，通用题两边都问；两套市场的指标分开算，分母各用各的。':'Market routing: CN questions go only to CN engines, Global questions only to Global engines, and general questions to both; metrics are calculated separately by market.',
+  '引擎分三类：联网 API（回答带真实引用来源）、不联网 API（测的是模型参数化知识里的品牌认知）、无公开 API（走人工采样表）。行内已标注。':'Engines fall into three types: browsing APIs (real citations), non-browsing APIs (parametric brand awareness), and engines without public APIs (manual sampling sheets). Each row is labeled.',
+  '每条样本同时记录 API 耗时；引擎表现页显示中位耗时（抗超时长尾），让采样成本透明。':'Each sample records API latency; the Engines page shows median latency so sampling cost remains visible.',
+  '三、指标口径（引擎表现页每一列）':'3. Metric definitions (every Engines-page column)',
+  '<b>提及率</b> = 无提示样本中，回答提到品牌（含别名）的比例。问题里点名了品牌的样本一律剔除——否则必然 100%，是假阳性。别名漏配会低估，到「设置 → 编辑当前品牌配置」补。':'<b>Mention</b> = the share of unprompted samples where the answer names the brand (including aliases). Samples where the question names the brand are excluded. Add missing aliases in Settings → Edit brand config.',
+  '<b>提及位次</b> = 回答里品牌相对其他候选品牌出现顺序的中位数，越小越靠前。':'<b>Rank</b> = the median position of the brand relative to other candidate brands in the answer; lower is better.',
+  '<b>引用份额</b> = 回答引用的全部域名条数中，属于你自有域名（含子域名）的比例。不联网引擎通常没有引用，显示 —。':'<b>Cite share</b> = the share of cited domains belonging to your domain (including subdomains). Non-browsing engines usually show —.',
+  '<b>结论</b>列的判语规则：0% → 完全不可见；严格高于同市场所有引擎 → 表现最好；≥5% → 有存在感但不稳定；&lt;5% → 偶发提及；从未引用你的域名会单独标注。样本不足或无法比较时不下结论。':'<b>Verdict</b>: 0% → invisible; higher than every engine in the same market → best performer; ≥5% → present but unstable; &lt;5% → occasional mention; never citing your domain is flagged separately. No verdict is given when samples are insufficient.',
+  '<b>GEO 健康分</b> = 提及率×30 + 引用份额×25 + 阵地覆盖×20 + 内容承接×15 + 事实一致性×10。没测到的项不按 0 分计，而是把权重重新归一，避免惩罚「还没测」。':'<b>GEO health score</b> = mention×30 + cite share×25 + channel coverage×20 + content readiness×15 + fact consistency×10. Untested components are re-normalized rather than scored as zero.',
+  '<b>疑似负面</b>只是线索词（避雷/不推荐/投诉/scam 等）在品牌名 ±百余字符窗口内命中，不做自动定性——定性靠样本回放人工复核，误报比漏报便宜。':'<b>Suspected negative</b> is only a cue-word hit near the brand name; it is never auto-judged and must be reviewed manually in sample replay.',
+  '每行一题：<code>编号|分组|市场(cn/global/both)|问题</code>。保存后重跑采样才生效。':'One question per line: <code>id|group|market(cn/global/both)|question</code>. Changes take effect on the next sampling run.',
+  '内容缺口 · ':'Content gap · ','阵地缺口 · ':'Channel gap · ','事实偏差 · ':'Fact deviation · ',
+  '还没有比对记录':'No comparison records yet','没有内容缺口':'No content gaps','P0/P1 阵地已全部覆盖':'All P0/P1 channels are covered',
+  '阵地缺口':'Channel gap','事实偏差':'Fact deviation','缺口问题':'Gap question','当前状态':'Current status',
+  '生成草稿':'Draft','建设方案':'Build plan','适合放这里的内容':'Content that belongs here','相关工单':'Related tickets',
+  '任务':'Task','来源':'Source','工作量':'Effort','负责':'Owner','待开始':'To do','进行中':'Doing','受阻':'Blocked',
+  '完成':'Done','具体的完成标准':'Definition of done','具体怎么干':'How exactly','影响页面':'Affected pages','直近的検証記録':'Recent verification',
+  '上升':'Up','下降':'Down','横ばい':'Flat','未计测':'Not measured','未测量':'Not measured',
+  '中文':'Chinese','海外':'Global','国内':'CN','通用':'Both','市场':'Market','问题':'Question','类别':'Group',
+  '你的提及':'Your mention','诊断':'Diagnosis','已有内容':'Content','编辑问题库':'Edit questions','AI 补充选题':'AI add topics'
+});
 const UI_RX={en:[
  [/^配置 ([A-Z_]+) 后自动采样$/,'Auto-samples once $1 is set'],
  [/^数据更新于 (.+)$/,'Data updated $1'],
@@ -899,7 +959,7 @@ UI_RX.ja.push(
  [/^已加入 (\d+) 题$/,'$1 問を追加']);
 
 Object.assign(UI_D.en,{
-'同一批无提示样本里，各品牌被提及的样本占比（含别名合并）。口径：只统计你与已配置竞品——没配置的品牌不会出现在这里，竞品清单越全分布越真实，缺了就到「设置 → 编辑当前品牌配置」补。':'Share of unprompted samples mentioning each brand (aliases merged). Scope: only you and configured competitors — unconfigured brands never appear here; the fuller your rival list, the truer the distribution. Add rivals in Settings → Edit brand config.',
+'同一批无提示样本里，各品牌被提及的样本占比（含别名合并）。口径：只统计你与Configured竞品——没配置的品牌不会出现在这里，竞品清单越全分布越真实，缺了就到「设置 → 编辑当前品牌配置」补。':'Share of unprompted samples mentioning each brand (aliases merged). Scope: only you and configured competitors — unconfigured brands never appear here; the fuller your rival list, the truer the distribution. Add rivals in Settings → Edit brand config.',
 '纳米AI搜索（360）':'NanoAI Search (360)','百度 AI 搜索':'Baidu AI Search','豆包 App / 网页版（与方舟 API 结果不同，需分开采）':'Doubao App / web (differs from Ark API — sample separately)',
 'ChatGPT 网页版（开 Search）':'ChatGPT web (Search on)','Claude 网页版（开 Web Search）':'Claude web (Web Search on)','采样表':'Sheet','通用大模型':'Generic LLMs',
 '国内 · 仅人工采样':'CN · manual only','海外 · 仅人工采样':'Global · manual only',
@@ -946,10 +1006,10 @@ Object.assign(UI_D.en,{
 'GitHub 仓库':'GitHub repo','Contents API 提交 markdown 到你的仓库（配 Pages/静态站即上线）':'Commits markdown via the Contents API (live with Pages / a static site)',
 'REST API 新建草稿文章，登录后台确认后再发布':'Creates draft posts via REST API — confirm in wp-admin before they go live',
 '公众号草稿箱':'WeChat drafts','新建草稿，需在公众号后台预览并群发；服务器 IP 要在白名单':'Creates drafts; preview and send from the WeChat console; server IP must be whitelisted',
-'自定义 Webhook':'Custom webhook','POST JSON {title, markdown, html, slug, path} 到你自己的接收端':'POSTs JSON {title, markdown, html, slug, path} to your own endpoint',
+'Custom Webhook':'Custom webhook','POST JSON {title, markdown, html, slug, path} 到你自己的接收端':'POSTs JSON {title, markdown, html, slug, path} to your own endpoint',
 '团队与权限：单机自托管版，无账号体系；服务只绑定 127.0.0.1。多人使用需自行加反向代理与认证。':'Teams & auth: single-machine self-hosted, no account system; the server binds to 127.0.0.1 only. For multi-user, add your own reverse proxy with auth.'});
 Object.assign(UI_D.ja,{
-'同一批无提示样本里，各品牌被提及的样本占比（含别名合并）。口径：只统计你与已配置竞品——没配置的品牌不会出现在这里，竞品清单越全分布越真实，缺了就到「设置 → 编辑当前品牌配置」补。':'無指名サンプル中の各ブランド言及率（別名は統合）。対象は自社と設定済み競合のみ——未設定ブランドは表示されない。競合リストが充実するほど分布は正確に。設定 → ブランド設定で追加。',
+'同一批无提示样本里，各品牌被提及的样本占比（含别名合并）。口径：只统计你与Configured竞品——没配置的品牌不会出现在这里，竞品清单越全分布越真实，缺了就到「设置 → 编辑当前品牌配置」补。':'無指名サンプル中の各ブランド言及率（別名は統合）。対象は自社と設定済み競合のみ——未設定ブランドは表示されない。競合リストが充実するほど分布は正確に。設定 → ブランド設定で追加。',
 '纳米AI搜索（360）':'ナノ AI 検索（360）','百度 AI 搜索':'百度 AI 検索','豆包 App / 网页版（与方舟 API 结果不同，需分开采）':'豆包 App / ウェブ版（方舟 API と結果が異なるため別採取）',
 'ChatGPT 网页版（开 Search）':'ChatGPT ウェブ版（Search オン）','Claude 网页版（开 Web Search）':'Claude ウェブ版（Web Search オン）','采样表':'採取表','通用大模型':'汎用 LLM',
 '国内 · 仅人工采样':'中国 · 手動のみ','海外 · 仅人工采样':'海外 · 手動のみ',
@@ -996,7 +1056,7 @@ Object.assign(UI_D.ja,{
 'GitHub 仓库':'GitHub リポジトリ','Contents API 提交 markdown 到你的仓库（配 Pages/静态站即上线）':'Contents API で markdown をコミット（Pages/静的サイトで即公開）',
 'REST API 新建草稿文章，登录后台确认后再发布':'REST API で下書き作成——wp-admin で確認後に公開',
 '公众号草稿箱':'公式アカウント下書き','新建草稿，需在公众号后台预览并群发；服务器 IP 要在白名单':'下書きを作成。管理画面でプレビューと配信。サーバー IP は要ホワイトリスト',
-'自定义 Webhook':'カスタム Webhook','POST JSON {title, markdown, html, slug, path} 到你自己的接收端':'JSON {title, markdown, html, slug, path} を自前エンドポイントへ POST',
+'Custom Webhook':'カスタム Webhook','POST JSON {title, markdown, html, slug, path} 到你自己的接收端':'JSON {title, markdown, html, slug, path} を自前エンドポイントへ POST',
 '团队与权限：单机自托管版，无账号体系；服务只绑定 127.0.0.1。多人使用需自行加反向代理与认证。':'チームと権限：単機セルフホスト版でアカウント機構なし。サーバーは 127.0.0.1 のみにバインド。複数人利用はリバースプロキシ+認証を自前で。'});
 UI_RX.en.push(
  [/^样本回放 · (.+)$/,'Sample replay · $1'],
@@ -1116,7 +1176,7 @@ Object.assign(UI_D.en,{
 '你的官网':'Your site',
 // 设置引擎分层
 '引擎与密钥':'Engines & keys','Key 写入项目根目录 .env，立即生效。':'Keys are written to .env at repo root, effective immediately.',
-'配好任意 1 个引擎就能开始采样':'One configured engine is enough to start sampling','，配得越多覆盖越全。':' — more engines, fuller coverage.',
+'配好任意 1 个引擎就能Start sampling':'One configured engine is enough to start sampling','，配得越多覆盖越全。':' — more engines, fuller coverage.',
 '优先 · 联网':'Priority · search','可选 · 不联网':'Optional · no search','可不配 · 当前项目用不到':'Skippable · unused by this project',
 '无需配置 · 没有公开 API，走人工周检表':'No key needed · no public API, weekly manual sheet','不配不影响当前项目':'Safe to skip','仍要配置':'Configure anyway','人工采样 · 无 Key':'Manual · no key',
 '这些引擎没有 API，但真实用户最多——每周用采样表手工查一轮（无痕模式），导入后与 API 样本同口径计入指标。':'These engines have no API but the most real users — run the weekly manual sheet (incognito), import, and they count in metrics on the same basis as API samples.',
@@ -1173,7 +1233,7 @@ Object.assign(UI_D.ja,{
 '这些域名在竞品语境里被引用 ≥2 次、从未出现在你的语境——最直接的阵地进攻清单。':'競合文脈で 2 回以上引用され自社文脈に一度も出ないドメイン——最直接の攻略リスト。',
 '你的官网':'自社サイト',
 '引擎与密钥':'エンジンとキー','Key 写入项目根目录 .env，立即生效。':'キーはリポジトリ直下の .env に保存、即時反映。',
-'配好任意 1 个引擎就能开始采样':'エンジン 1 つの設定でサンプリング開始可','，配得越多覆盖越全。':'——多いほどカバレッジ向上。',
+'配好任意 1 个引擎就能Start sampling':'エンジン 1 つの設定でサンプリング開始可','，配得越多覆盖越全。':'——多いほどカバレッジ向上。',
 '优先 · 联网':'優先 · 検索あり','可选 · 不联网':'任意 · 検索なし','可不配 · 当前项目用不到':'不要 · 本プロジェクト対象外',
 '无需配置 · 没有公开 API，走人工周检表':'設定不要 · 公開 API なし、週次手動シートで','不配不影响当前项目':'未設定でも影響なし','仍要配置':'それでも設定','人工采样 · 无 Key':'手動 · キー不要',
 '这些引擎没有 API，但真实用户最多——每周用采样表手工查一轮（无痕模式），导入后与 API 样本同口径计入指标。':'API はないが実ユーザー最多のエンジン。週次シートで手動確認（シークレット）し、取込後は API サンプルと同一基準で集計。',
@@ -1318,7 +1378,7 @@ UI_SUB.en.push(['优先 · 联网','Priority·search'],['可选 · 不联网','O
 UI_SUB.ja.push(['优先 · 联网','優先·検索'],['可选 · 不联网','任意·検索なし'],['低风险','低リスク'],['需观察','要観察'],['高风险','高リスク'],['已发布','公開済'],['待发布','未公開']);
 // 渠道名 / 说明 / 配置教程（后端 publish.py 下发的数据，同样走 DOM 翻译）
 Object.assign(UI_D.en,{
-'GitHub 仓库':'GitHub repo','公众号草稿箱':'WeChat drafts','自定义 Webhook':'Custom webhook','X（推文引流）':'X (teaser tweet)','Reddit（全文自帖）':'Reddit (full self-post)',
+'GitHub 仓库':'GitHub repo','公众号草稿箱':'WeChat drafts','Custom Webhook':'Custom webhook','X（推文引流）':'X (teaser tweet)','Reddit（全文自帖）':'Reddit (full self-post)',
 'Contents API 提交 markdown 到你的仓库（配 Pages/静态站即上线）':'Commits markdown via Contents API (with Pages it goes live instantly)',
 'REST API 新建草稿文章，登录后台确认后再发布':'Creates a draft post via REST API — confirm in wp-admin to go live',
 'POST JSON {title, markdown, html, slug, path} 到你自己的接收端——没有官方 API 的平台用它桥接':'POSTs JSON {title, markdown, html, slug, path} to your endpoint — the bridge for platforms without official APIs',
@@ -1350,7 +1410,7 @@ Object.assign(UI_D.en,{
 '永久素材封面 media_id（草稿必需）':'Permanent-media cover media_id (required)','文章公开链接（留空则自动用该文件最近一次 GitHub/WordPress 发布的 URL）':'Public article URL (empty = latest GitHub/WordPress publish URL of this file)','发到哪个 subreddit（不带 r/）':'Target subreddit (without r/)',
 });
 Object.assign(UI_D.ja,{
-'GitHub 仓库':'GitHub リポジトリ','公众号草稿箱':'公式アカウント下書き','自定义 Webhook':'カスタム Webhook','X（推文引流）':'X（誘導ツイート）','Reddit（全文自帖）':'Reddit（全文投稿）',
+'GitHub 仓库':'GitHub リポジトリ','公众号草稿箱':'公式アカウント下書き','Custom Webhook':'カスタム Webhook','X（推文引流）':'X（誘導ツイート）','Reddit（全文自帖）':'Reddit（全文投稿）',
 'Contents API 提交 markdown 到你的仓库（配 Pages/静态站即上线）':'Contents API で markdown をコミット（Pages 併用で即公開）',
 'REST API 新建草稿文章，登录后台确认后再发布':'REST API で下書き作成——管理画面で確認後公開',
 'POST JSON {title, markdown, html, slug, path} 到你自己的接收端——没有官方 API 的平台用它桥接':'自前エンドポイントへ JSON を POST——公式 API のない先への橋渡し',
@@ -1420,10 +1480,10 @@ UI_RX.ja.push(
 );
 UI_RX.en.push(
  [/^为什么没有微博[\s\S]*极易失效——$/,'Why no Weibo / Toutiao / Xiaohongshu / Bilibili / Sohu / LinkedIn / Facebook / Instagram: none offer a personally usable official publishing API (or they require business review / short-lived tokens), and cookie-simulated posting violates their terms and breaks constantly — '],
- [/^。需要铺这些阵地：人工发布后到工作台「分发清单」勾掉，或用「自定义 Webhook」桥接你自己的工具。$/,'. To cover those channels: publish manually and tick them off in the Workbench distribution list, or bridge your own tooling via the custom webhook.']);
+ [/^。需要铺这些阵地：人工发布后到工作台「分发清单」勾掉，或用「Custom Webhook」桥接你自己的工具。$/,'. To cover those channels: publish manually and tick them off in the Workbench distribution list, or bridge your own tooling via the custom webhook.']);
 UI_RX.ja.push(
  [/^为什么没有微博[\s\S]*极易失效——$/,'Weibo／Toutiao／小紅書／Bilibili／Sohu／LinkedIn／Facebook／Instagram が無い理由：個人が使える公式公開 API が存在せず（または企業審査・短命トークンが必要）、Cookie 偽装投稿は規約違反かつ頻繁に壊れるため——'],
- [/^。需要铺这些阵地：人工发布后到工作台「分发清单」勾掉，或用「自定义 Webhook」桥接你自己的工具。$/,'。これらへの展開は：手動公開後にワークベンチの配信リストでチェック、またはカスタム Webhook で自前ツールへ橋渡し。']);
+ [/^。需要铺这些阵地：人工发布后到工作台「分发清单」勾掉，或用「Custom Webhook」桥接你自己的工具。$/,'。これらへの展開は：手動公開後にワークベンチの配信リストでチェック、またはカスタム Webhook で自前ツールへ橋渡し。']);
 
 function uiTranslate(root){
   if(ULANG==='zh'||!root)return;
@@ -1476,8 +1536,7 @@ function renderSide(){
     <div style="display:flex;align-items:center;justify-content:space-between">
       <img src="${LOGO_SRC}" alt="Lifewood" style="height:26px;width:auto;display:block">
       <span style="display:flex;gap:2px">
-        ${[['zh','中'],['en','EN'],['ja','日']].map(([l,t])=>`<button onclick="setLang('${l}')"
-          style="background:${ULANG===l?'var(--a900)':'none'};border:0;color:${ULANG===l?'var(--a300)':'var(--t600)'};font-size:10.5px;padding:2px 6px;border-radius:5px;cursor:pointer">${t}</button>`).join('')}
+        <span style="font-size:10.5px;padding:2px 6px;color:var(--a300);border-radius:5px">EN</span>
       </span>
     </div>
     <div style="font-size:11px;color:var(--t500);margin-top:6px">Geo<span style="color:var(--accent)">Look</span> · ${trText('生成式引擎优化平台')}</div>
@@ -1568,30 +1627,30 @@ async function samplingConfigModal(preselected){
       '<input type="checkbox" value="'+esc(k.code)+'" '+(SAMP.selected.has(k.code)?'checked':'')+' '+(k.ok?'':'disabled')+
       ' onchange="samplingToggleEngine(\''+esc(k.code)+'\',this.checked)" style="accent-color:var(--a400)">'+
       '<span style="flex:1;font-size:12.5px">'+esc(k.label)+' <span class="muted" style="font-size:10.5px">'+mktLabel(k.market)+'</span></span>'+
-      '<span style="font-size:10.5px;color:'+(k.ok?'var(--a300)':'var(--t600)')+'">'+(k.ok?'已配置':'未配置')+'</span></label>';
+      '<span style="font-size:10.5px;color:'+(k.ok?'var(--a300)':'var(--t600)')+'">'+(k.ok?'Configured':'Not configured')+'</span></label>';
   }).join('');
-  const modes=[['all','全部问题'],['recommend','Recommend'],['brand','Brand Check'],['custom','自定义']];
+  const modes=[['all','All questions'],['recommend','Recommend'],['brand','Brand Check'],['custom','Custom']];
   const modesHtml=modes.map(function(x){
     return '<label class="tag '+(x[0]==='all'?'tag-accent':'tag-dim')+'" style="cursor:pointer;padding:5px 9px">'+
       '<input type="radio" name="sampling-mode" value="'+x[0]+'" '+(SAMP.mode===x[0]?'checked':'')+
       ' onchange="samplingSetMode(\''+x[0]+'\')" style="margin-right:4px">'+x[1]+'</label>';
   }).join('');
   modal('<h4 style="font-size:17px">AI 答案采样</h4>'+
-    '<p class="muted" style="font-size:12px;margin-top:4px;line-height:1.5">选择要运行的自动化引擎和问题。市场路由仍会生效：Global 问题只发给 Global 引擎，CN 问题只发给 CN 引擎，Brand Check（both）可发给两边。</p>'+
-    '<div style="margin-top:14px;font-size:13px;font-weight:500">1. 选择引擎</div>'+
+    '<p class="muted" style="font-size:12px;margin-top:4px;line-height:1.5">Select the automated engines and questions to run. Market routing still applies: Global questions go only to Global engines, CN questions go only to CN engines, and Brand Check (both) can go to either market.</p>'+
+    '<div style="margin-top:14px;font-size:13px;font-weight:500">1. Select engines</div>'+
     '<div style="max-height:230px;overflow:auto;margin-top:7px;border:1px solid var(--line);border-radius:8px;padding:6px 10px">'+enginesHtml+'</div>'+
-    '<div style="margin-top:16px;font-size:13px;font-weight:500">2. 选择问题</div>'+
+    '<div style="margin-top:16px;font-size:13px;font-weight:500">2. Select questions</div>'+
     '<div class="row" style="gap:6px;margin-top:7px;flex-wrap:wrap">'+modesHtml+
     '<span id="sampling-question-count" class="muted" style="margin-left:auto;font-size:11.5px"></span></div>'+
     '<div id="sampling-custom" style="display:none;margin-top:8px">'+
-    '<input id="sampling-search" class="input" placeholder="搜索问题或 ID…" oninput="SAMP.search=this.value;samplingRenderQuestions()">'+
+    '<input id="sampling-search" class="input" placeholder="Search questions or IDs…" oninput="SAMP.search=this.value;samplingRenderQuestions()">'+
     '<div id="sampling-question-list" style="margin-top:6px;max-height:250px;overflow:auto;border:1px solid var(--line);border-radius:8px;padding:4px 8px"></div></div>'+
-    '<div class="row" style="gap:10px;margin-top:14px"><label class="small">重复轮次 '+
+    '<div class="row" style="gap:10px;margin-top:14px"><label class="small">Repeat rounds '+
     '<select id="sampling-repeat" style="background:var(--deep);color:var(--text);border:1px solid #405546;border-radius:6px;padding:5px 8px;margin-left:4px">'+
     '<option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>'+
-    '<span class="muted" style="font-size:11px">预计任务量会按「引擎 × 可路由问题 × 轮次」计算。</span></div>'+
-    '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn btn-secondary" onclick="closeModal()">取消</button>'+
-    '<button class="btn btn-primary" onclick="startSamplingFromModal()">开始采样</button></div>');
+    '<span class="muted" style="font-size:11px">Estimated workload is calculated as engines × routable questions × rounds.</span></div>'+
+    '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'+
+    '<button class="btn btn-primary" onclick="startSamplingFromModal()">Start sampling</button></div>');
   samplingRenderQuestions();
 }
 
@@ -1601,7 +1660,7 @@ function samplingToggleEngine(code,checked){
 
 async function startSamplingFromModal(){
   const platforms=[...SAMP.selected];
-  if(!platforms.length){toast('至少选择一个已配置的自动化引擎','err');return}
+  if(!platforms.length){toast('Select at least one configured automated engine','err');return}
   const repeat=Math.max(1,Math.min(3,parseInt($('#sampling-repeat').value||'1',10)||1));
   let qids=[];
   if(SAMP.mode==='recommend')qids=SAMP.questions.filter(function(q){return samplingQuestionType(q)==='recommend'}).map(function(q){return String(q.id)});
@@ -1767,7 +1826,7 @@ async function vEngines(){
     engs.push({
       platform:k.code,label:k.label,market:k.market,search:k.search,samples:0,
       mention:null,pos_median:null,cite_share:null,cite_counts:[0,0],top_sources:[],
-      verdict:'已配置 · 尚未采样',configured:true
+      verdict:'Configured · 尚未采样',configured:true
     });
   });
   const manual=(KEYS||[]).filter(k=>k.ok!==true&&!engs.some(e=>e.platform===k.code));
@@ -1837,7 +1896,7 @@ async function vEngines(){
 
     ${(a.brand_dist&&((a.brand_dist.cn||[]).length||(a.brand_dist.global||[]).length))?`
     <h4 style="font-size:16px;margin:28px 0 6px">全部引擎 · 品牌提及分布</h4>
-    <p class="muted" style="font-size:12px;margin-bottom:10px">同一批无提示样本里，各品牌被提及的样本占比（含别名合并）。口径：只统计你与已配置竞品——没配置的品牌不会出现在这里，竞品清单越全分布越真实，缺了就到「设置 → 编辑当前品牌配置」补。</p>
+    <p class="muted" style="font-size:12px;margin-bottom:10px">同一批无提示样本里，各品牌被提及的样本占比（含别名合并）。口径：只统计你与Configured竞品——没配置的品牌不会出现在这里，竞品清单越全分布越真实，缺了就到「设置 → 编辑当前品牌配置」补。</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
       ${[['cn','国内市场'],['global','海外市场']].map(([m,l])=>{
         const list=a.brand_dist[m]||[];if(!list.length)return'';
@@ -1971,7 +2030,7 @@ function expandModal(){
       <p class="muted" style="font-size:12.5px;margin-top:6px">词根：品牌 + 竞品 + 品类；来源：百度下拉（国内）+ Google 补全（海外）。勾选后入库，不自动加题。</p>
       <p class="muted" style="font-size:12.5px">还没有拓词数据</p>
       <div class="row" style="justify-content:flex-end;margin-top:12px">
-        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
         <button class="btn btn-primary" onclick="closeModal();runAction('expand')">开始拓词</button></div>`);
     return}
   const cand=(EXPD.terms||[]).filter(t=>!t.in_bank);
@@ -1993,7 +2052,7 @@ function expandModal(){
     <div style="max-height:440px;overflow:auto;margin-top:6px">${rows||'<p class="muted" style="font-size:12.5px">候选都已入库——重新拓词看看有没有新词。</p>'}</div>
     <div class="row" style="justify-content:flex-end;margin-top:12px">
       <button class="btn btn-ghost" onclick="closeModal();runAction('expand')">重新拓词</button>
-      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="expAdd()">加入问题库</button></div>`);
 }
 function expAddIdx(i){
@@ -2112,7 +2171,7 @@ function showMethod(){
       ${li(en?'<b>GEO health score</b> = mention×30 + cite share×25 + channel coverage×20 + content readiness×15 + fact consistency×10. Untested sub-scores are not scored as 0 — the remaining weights are re-normalized instead, so “not yet measured” is never penalized like a failure.':'<b>GEO 健康分</b> = 提及率×30 + 引用份额×25 + 阵地覆盖×20 + 内容承接×15 + 事实一致性×10。没测到的项不按 0 分计，而是把权重重新归一，避免惩罚「还没测」。')}
       ${li(en?'The <b>Diagnosis</b> column (Questions / Gap Diagnosis) types each row by fixed priority: <b>Suspected negative</b> (a negative cue word hit near the brand mention, needs manual review) &gt; <b>Rival-dominated</b> (you’re at 0% and some rival is ≥50%) &gt; <b>Absent</b> (0%) &gt; <b>Low-ranked</b> (median rank &gt;3) &gt; normal. Hover the tag to see the basis.':'<b>诊断</b>列（问题库/差距诊断）按固定优先级分型：<b>疑似负面</b>（品牌附近命中负面线索词，需人工复核）&gt; <b>竞品主导</b>（你 0% 且某对手出现率 ≥50%）&gt; <b>完全缺席</b>（0%）&gt; <b>排名靠后</b>（位次中位 &gt;3）&gt; 表现正常。悬停标签可看依据。')}
       ${li(en?'<b>Suspected negative</b> only means a cue word (avoid / not recommended / complaint / scam, etc.) was found within roughly a hundred characters of the brand name — it is never auto-judged. The actual call is made by a human reviewing the sample replay; a false positive is cheaper than a missed one.':'<b>疑似负面</b>只是线索词（避雷/不推荐/投诉/scam 等）在品牌名 ±百余字符窗口内命中，不做自动定性——定性靠样本回放人工复核，误报比漏报便宜。')}
-      ${li(en?'<b>Brand mention distribution / rival’s strongest engine</b>: tallies you and configured rivals (aliases merged) as they appear in answers; the denominator is the unprompted sample count for that scope, and a brand mentioned more than once in one sample still counts once. <b>Unconfigured brands are never counted</b> — the fuller your rival list and aliases, the truer the distribution.':'<b>品牌提及分布 / 竞品最强引擎</b>：统计回答中出现的你与已配置竞品（别名并入），分母为对应范围的无提示样本数，同一样本提多次只算一次。<b>未配置的品牌不计入</b>——竞品清单和别名越全，分布越真实。')}
+      ${li(en?'<b>Brand mention distribution / rival’s strongest engine</b>: tallies you and configured rivals (aliases merged) as they appear in answers; the denominator is the unprompted sample count for that scope, and a brand mentioned more than once in one sample still counts once. <b>Unconfigured brands are never counted</b> — the fuller your rival list and aliases, the truer the distribution.':'<b>品牌提及分布 / 竞品最强引擎</b>：统计回答中出现的你与Configured竞品（别名并入），分母为对应范围的无提示样本数，同一样本提多次只算一次。<b>Not configured的品牌不计入</b>——竞品清单和别名越全，分布越真实。')}
     </ul>
 
     <p class="muted" style="font-size:11.5px;margin-top:10px">${en?'Implemented in scripts/bootstrap.py (question generation), expand.py (keyword mining), sample.py (sampling & judging), analytics.py (metrics) — this panel is kept in sync with the code.':'规则实现在 scripts/bootstrap.py（出题）、expand.py（拓词）、sample.py（采样与判定）、analytics.py（指标），本弹窗与代码同步维护。'}</p>
@@ -2126,7 +2185,7 @@ async function editQuestions(){
     <p class="muted" style="font-size:12px">${tr('每行一题：<code>编号|分组|市场(cn/global/both)|问题</code>。保存后重跑采样才生效。','One question per line: <code>id|group|market(cn/global/both)|question</code>. Changes take effect after the next sampling run.')}</p>
     <textarea id="qedit" class="input" rows="18">${esc(rows)}</textarea>
     <div class="row" style="justify-content:flex-end;margin-top:12px">
-      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveQuestions()">保存</button></div>`);
 }
 async function saveQuestions(){
@@ -2219,7 +2278,7 @@ async function addFact(pre){
       <label class="seg-opt"><input type="radio" name="fst" value="缺失">缺失</label>
       <label class="seg-opt"><input type="radio" name="fst" value="一致">一致</label></div></div>
     <div class="row" style="justify-content:flex-end;margin-top:12px">
-      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveFact()">保存</button></div>`);
 }
 async function saveFact(){
@@ -2296,7 +2355,7 @@ function chanFitQs(c){
 function distOf(qid,chid){return !!(((D.distribution||{})[qid]||{})[chid])}
 async function distToggle(qid,ch,on){
   const r=await post('/api/distribution/'+SLUG,{qid,channel:ch,on});
-  if(r.ok){D.distribution=r.distribution;toast(on?'已标记铺设 ✓':'已取消标记');render()}
+  if(r.ok){D.distribution=r.distribution;toast(on?'已标记铺设 ✓':'已Cancel标记');render()}
   else toast('失败：'+(r.error||''),'err');
 }
 function chanOpen(name){
@@ -2388,7 +2447,7 @@ async function editFactsSrc(){
     <p class="muted" style="font-size:12px">${tr('Markdown。每条事实标证据等级 A–E；没来源的标「待确认」，不许编。保存后点「重新生成」同步到资产。','Markdown. Tag each fact with an evidence grade A–E; anything without a source is flagged “unconfirmed” — never invented. After saving, click “Regenerate” to sync it to the assets.')}</p>
     <textarea id="factsrc" class="input" rows="20">${esc(f.text||'')}</textarea>
     <div class="row" style="justify-content:flex-end;margin-top:12px">
-      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveFactsSrc()">保存</button></div>`);
 }
 async function saveFactsSrc(){
@@ -2860,7 +2919,7 @@ async function editSheet(name){
     <p class="muted" style="font-size:12px">把答案粘进 \`\`\`answer 块；留空的题会被跳过，不会算成「未提及」。</p>
     <textarea id="sheet" class="input" rows="18">${esc(text)}</textarea>
     <div class="row" style="justify-content:flex-end;margin-top:12px">
-      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="importSheet(${esc(JSON.stringify(name))})">保存并导入</button></div>`);
 }
 async function importSheet(name){
@@ -2910,7 +2969,7 @@ async function vPublishing(){
     <div class="muted" style="font-size:11.5px;margin-top:10px;line-height:1.7">
       为什么没有微博 / 头条号 / 小红书 / B站 / 搜狐号 / LinkedIn / Facebook / Instagram：
       这些平台没有个人可用的官方发布 API（或需企业审核、token 频繁过期），Cookie 模拟发布违反平台条款且极易失效——
-      <b>宁可不接，不做假接入</b>。需要铺这些阵地：人工发布后到工作台「分发清单」勾掉，或用「自定义 Webhook」桥接你自己的工具。
+      <b>宁可不接，不做假接入</b>。需要铺这些阵地：人工发布后到工作台「分发清单」勾掉，或用「Custom Webhook」桥接你自己的工具。
     </div>
 
     <h4 style="font-size:16px;margin:24px 0 8px">发布记录${recs.length?`<span style="font-size:11.5px;color:var(--t600);font-weight:400"> · 共 ${recs.length} 条</span>`:''}</h4>
@@ -2967,11 +3026,11 @@ async function vSettings(){
             <span style="flex:1;font-size:13px" title="${esc(k.note||'')}">${esc(k.label)}
               <span class="muted" style="font-size:11px;margin-left:6px">${mktLabel(k.market)}</span>
               ${k.search?'<span class="tag tag-outline" style="font-size:10px;margin-left:4px" title="原生联网并返回引用，采样证据质量最高">优先 · 联网</span>':'<span class="muted" style="font-size:10.5px;margin-left:4px" title="API 不联网，测的是模型参数化知识里的品牌认知——同样是有效指标">可选 · 不联网</span>'}</span>
-            <span style="font-size:11.5px;color:var(--t600)">${k.ok===true?'已配置'+(k.key_tail?' ····'+esc(k.key_tail):''):esc(k.env)}</span>
+            <span style="font-size:11.5px;color:var(--t600)">${k.ok===true?'Configured'+(k.key_tail?' ····'+esc(k.key_tail):''):esc(k.env)}</span>
             <button class="btn ${k.ok===true?'btn-ghost':'btn-secondary'}" style="font-size:12px;padding:2px 8px" onclick="editKey(${k.i})">${k.ok===true?'修改':'配置'}</button></div>`;
           return `
           <div><div style="font-size:15px;font-weight:500">引擎与密钥</div>
-            <div style="font-size:11.5px;color:var(--t600)">Key 写入项目根目录 .env，立即生效。<b>配好任意 1 个引擎就能开始采样</b>，配得越多覆盖越全。</div></div>
+            <div style="font-size:11.5px;color:var(--t600)">Key 写入项目根目录 .env，立即生效。<b>配好任意 1 个引擎就能Start sampling</b>，配得越多覆盖越全。</div></div>
           <div style="font-size:12px;margin-top:2px;color:${done?'var(--t400)':'var(--a300)'}">建议配置 ${done}/${need.length} 已就绪${done?'':' —— 从「优先 · 联网」的引擎开始'}</div>
 
           <div style="font-size:11px;letter-spacing:.08em;color:var(--t600);margin-top:8px">建议配置 · 当前项目（${mktLabel(M)}）采样用</div>
@@ -3033,12 +3092,12 @@ function editPub(i){
       ${g.steps.map((s,n)=>`<div style="display:flex;gap:8px;padding:3px 0;font-size:12px;line-height:1.55;color:var(--t400)">
         <span style="color:var(--a300);flex:none">${n+1}.</span><span>${esc(s)}</span></div>`).join('')}
     </div>`:''}
-    ${x.env.map(e=>`<div class="field"><label>${esc(e)}${x.missing.includes(e)?'':'（已配置，留空保持不变）'}</label>
+    ${x.env.map(e=>`<div class="field"><label>${esc(e)}${x.missing.includes(e)?'':'（Configured，留空保持不变）'}</label>
       <input class="input pub-env" data-env="${esc(e)}" type="password" autocomplete="off" placeholder="${x.missing.includes(e)?'必填':'留空保持不变'}"></div>`).join('')}
     ${x.cfg.map(c=>`<div class="field"><label>${esc(c.key)}</label>
       <input class="input pub-cfg" data-key="${esc(c.key)}" value="${esc(c.value)}" placeholder="${esc(c.hint)}"></div>`).join('')}
     <div class="row" style="justify-content:flex-end;margin-top:12px">
-      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="savePub(${i})">保存</button></div>`);
 }
 async function savePub(i){
@@ -3096,7 +3155,7 @@ async function editConfig(){
     <div class="field"><label>${tr('市场','Market')}</label><div class="seg">
       ${['cn','global','both'].map(m=>`<label class="seg-opt"><input type="radio" name="cmkt" value="${m}" ${cfg.market===m?'checked':''}>${tr({cn:'国内',global:'海外',both:'两者都要'}[m],{cn:'CN',global:'Global',both:'Both'}[m])}</label>`).join('')}</div></div>
     <div class="row" style="justify-content:flex-end;margin-top:12px">
-      <button class="btn btn-secondary" onclick="closeModal()">${tr('取消','Cancel')}</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${tr('Cancel','Cancel')}</button>
       <button class="btn btn-primary" onclick="saveCfg()">${tr('保存','Save')}</button></div>`);
 }
 async function saveCfg(){
@@ -3115,14 +3174,14 @@ function editKey(i){
   const k=KEYS[i];
   modal(`<h4 style="font-size:17px">${esc(k.label)}</h4>
     ${k.note?`<p class="muted" style="font-size:12px;margin:4px 0 0">${esc(k.note)}</p>`:''}
-    <div class="field"><label>API Key（${esc(k.env)}${k.ok===true?tr('，已配置','，configured')+(k.key_tail?tr('，尾号 ','，ending ')+k.key_tail:''):''}）</label>
+    <div class="field"><label>API Key（${esc(k.env)}${k.ok===true?tr('，Configured','，configured')+(k.key_tail?tr('，尾号 ','，ending ')+k.key_tail:''):''}）</label>
       <input id="k-key" class="input" type="password" autocomplete="off"
         placeholder="${k.ok===true?tr('留空则保持现有 Key 不变','Leave blank to keep the current key'):tr('粘贴 API Key','Paste your API key')}"></div>
     ${k.model_env?`<div class="field"><label>${tr('模型','Model')}（${esc(k.model_env)}${tr('，留空用默认',', blank uses the default')}）</label>
       <input id="k-model" class="input" value="${k.model_set?esc(k.model):''}" placeholder="${esc(k.model)}"></div>`:''}
     <div class="row" style="justify-content:flex-end;margin-top:12px">
       ${k.ok===true?`<button class="btn btn-ghost" style="margin-right:auto" onclick="if(confirm(tr('确定从 .env 删除 ${esc(k.env)}？','Delete ${esc(k.env)} from .env?')))saveKey(${i},true)">清除 Key</button>`:''}
-      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveKey(${i})">保存</button></div>`);
 }
 async function saveKey(i,clear){
@@ -3158,7 +3217,7 @@ async function vOnboard(){
           <button class="btn btn-secondary" style="font-size:12.5px" onclick="go('settings')">去配置 Key →</button>
           <span class="muted" style="font-size:11.5px">配好后回到这里继续</span></div>
       </div>`
-      :`<div class="muted" style="font-size:12px">已配置引擎：国内 ${okCn} 个 · 海外 ${okGl} 个（可在「设置」增改）${(ST.obMkt||'both')!=='global'&&!okCn?'——注意国内市场尚无可用 Key':''}${(ST.obMkt||'both')!=='cn'&&!okGl?'——注意海外市场尚无可用 Key':''}</div>`}
+      :`<div class="muted" style="font-size:12px">Configured引擎：国内 ${okCn} 个 · 海外 ${okGl} 个（可在「设置」增改）${(ST.obMkt||'both')!=='global'&&!okCn?'——注意国内市场尚无可用 Key':''}${(ST.obMkt||'both')!=='cn'&&!okGl?'——注意海外市场尚无可用 Key':''}</div>`}
       <div class="field"><label>官网域名 *</label><input id="ob-url" class="input" placeholder="https://example.com" value="${esc(ST.obUrl||'')}"></div>
       <div class="field"><label>品牌名称（留空自动从网页识别）</label><input id="ob-name" class="input" value="${esc(ST.obName||'')}"></div>
       <div class="field"><label>目标市场</label><div class="seg">
@@ -3206,7 +3265,7 @@ async function obCreate(){
     {go('settings');return}
   const mkNeed=ST.obMkt==='both'?['cn','global']:[ST.obMkt];
   const miss=mkNeed.filter(m=>!okKeys.some(k=>k.market===m));
-  if(okKeys.length&&miss.length&&!confirm(tr(`所选市场里 ${miss.map(m=>m==='cn'?'国内':'海外').join('、')} 尚无已配置的引擎 Key，该市场的自动采样会被跳过（可稍后补 Key 或用人工采样表）。\n\n仍要继续吗？`,
+  if(okKeys.length&&miss.length&&!confirm(tr(`所选市场里 ${miss.map(m=>m==='cn'?'国内':'海外').join('、')} 尚无Configured的引擎 Key，该市场的自动采样会被跳过（可稍后补 Key 或用人工采样表）。\n\n仍要继续吗？`,
     `No engine keys are configured yet for ${miss.map(m=>m==='cn'?'CN':'Global').join(' / ')} — automatic sampling for that market will be skipped (you can add keys later or use a manual sampling sheet).\n\nContinue anyway?`)))
     {go('settings');return}
   ST.obNoSample=$('#ob-nosample').checked;
@@ -3496,7 +3555,7 @@ async function sampleModal(key){
     <div class="row" style="justify-content:flex-end;margin-top:14px">
       <button class="btn btn-ghost" style="margin-right:auto;color:var(--t500)" onclick="delSample(${esc(JSON.stringify(key))})">删除此样本</button>
       ${r.needs_review?`<button class="btn btn-secondary" onclick="saveSample(${esc(JSON.stringify(key))},true)">标记已复核</button>`:''}
-      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveSample(${esc(JSON.stringify(key))})">保存</button></div>`);
 }
 async function saveSample(key,clearReview){
